@@ -21,10 +21,19 @@ import { createLobby } from './lobby.js';
 import { isEntryType, readMessage } from './protocol.js';
 import { contentType, publicPath } from './static.js';
 
-/** Cada cuánto se tiran las salas caducadas y se comprueba que los sockets viven. */
+/**
+ * Cada cuánto se tiran las salas caducadas y se comprueba que los sockets siguen
+ * vivos. Se puede cambiar al arrancar para no tener que esperar medio minuto en los
+ * tests.
+ */
 const UPKEEP_MS = 30_000;
 
-export function startServer({ port = 0, root = process.cwd(), lobby = createLobby() } = {}) {
+export function startServer({
+  port = 0,
+  root = process.cwd(),
+  lobby = createLobby(),
+  upkeepMs = UPKEEP_MS,
+} = {}) {
   const http = createServer((request, response) => serveFile(request, response, root));
   const wss = new WebSocketServer({ server: http });
 
@@ -62,7 +71,7 @@ export function startServer({ port = 0, root = process.cwd(), lobby = createLobb
   const upkeep = setInterval(() => {
     for (const room of lobby.sweep()) closeRoom(room.code, 'La sala ha caducado');
     for (const socket of wss.clients) checkAlive(socket);
-  }, UPKEEP_MS);
+  }, upkeepMs);
   upkeep.unref();
 
   /** Una acción ya validada. Entrar en una sala y jugar dentro son cosas distintas. */

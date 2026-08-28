@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { WebSocket } from 'ws';
 
 import { startServer } from '../src/server/server.js';
+import { createLobby } from '../src/server/lobby.js';
+import { ROOM_TTL_MS } from '../src/server/rooms.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -24,8 +26,8 @@ after(() => server.close());
  * `next` espera al siguiente mensaje del tipo pedido y guarda todo lo recibido, que
  * es lo que permite comprobar que el secreto no viaja nunca (criterio 5).
  */
-function player() {
-  const socket = new WebSocket(`ws://localhost:${port}`);
+function player(at = port) {
+  const socket = new WebSocket(`ws://localhost:${at}`);
   const received = [];
   const waiting = [];
   let cursor = 0;
@@ -262,4 +264,34 @@ test('sin el token no se recupera la plaza de nadie', async () => {
 
   impostor.close();
   guest.close();
+});
+
+// ---------------------------------------------------------------------------
+// Criterio 15: la sala caduca y se avisa a quien siga dentro
+// ---------------------------------------------------------------------------
+
+test('una sala abandonada caduca y echa a quien quedaba', async () => {
+  // Un lobby con el reloj en la mano y un barrido que no hace esperar al test.
+  let clock = 1_000_000;
+  const impatient = startServer({
+    port: 0,
+    root,
+    lobby: createLobby({ now: () => clock }),
+    upkeepMs: 20,
+  });
+  const impatientPort = await impatient.listen();
+
+  const alone = player(impatientPort);
+  await alone.open;
+  alone.send({ type: 'create', name: 'Eric' });
+
+  // Hay que esperar a estar sentado: si el reloj salta antes de que el servidor
+  // atienda el mensaje, la sala nacería ya con la hora nueva y no caducaría.
+  await alone.next('seated');
+  clock += ROOM_TTL_MS + 1; // nadie ha venido a jugar
+
+  assert.match((await alone.next('expired')).message, /caducado/);
+
+  alone.close();
+  await impatient.close();
 });
