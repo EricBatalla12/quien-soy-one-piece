@@ -68,12 +68,14 @@ export function render({ view, status, error }) {
 function headerLine(view) {
   if (view === null) return 'Dos jugadores, dos secretos';
 
-  const room = `Sala ${escapeHtml(view.code)}`;
+  // El código y el marcador van en pastillas: son los dos datos que se buscan de
+  // un vistazo, y sueltos en la línea se perdían entre los nombres.
+  const room = `<span class="pill room">${escapeHtml(view.code)}</span>`;
   const you = escapeHtml(view.you.name);
-  if (view.rival === null) return `${you} · ${room}`;
+  if (view.rival === null) return `${you} ${room}`;
 
-  const score = `${view.score[view.you.id]}–${view.score[view.rival.id]}`;
-  return `${you} contra ${escapeHtml(view.rival.name)} · ${room} · ${score}`;
+  const score = `<span class="pill score">${view.score[view.you.id]}–${view.score[view.rival.id]}</span>`;
+  return `${you} contra ${escapeHtml(view.rival.name)} ${room} ${score}`;
 }
 
 function connectionNotice(status) {
@@ -226,11 +228,22 @@ function endScreen(view) {
   return `
     <section class="final">
       <h2>${iWon ? '¡Has ganado!' : `Ha ganado ${rival}`}</h2>
-      <p>Eras <strong>${escapeHtml(view.yourCharacter)}</strong>.</p>
-      <p>${rival} era <strong>${escapeHtml(view.chosenForRival)}</strong>.</p>
-      <p class="score">
-        ${escapeHtml(view.you.name)} ${view.score[view.you.id]} –
-        ${view.score[view.rival.id]} ${rival}
+      <div class="reveal">
+        <p class="revealed">
+          <span class="label">Eras</span>
+          <strong>${escapeHtml(view.yourCharacter)}</strong>
+        </p>
+        <p class="revealed">
+          <span class="label">${rival} era</span>
+          <strong>${escapeHtml(view.chosenForRival)}</strong>
+        </p>
+      </div>
+      <p class="score board">
+        <span>${escapeHtml(view.you.name)}</span>
+        <b>${view.score[view.you.id]}</b>
+        <span class="dash">–</span>
+        <b>${view.score[view.rival.id]}</b>
+        <span>${rival}</span>
       </p>
       ${historyList(view)}
       <button type="button" id="rematch">Otra partida</button>

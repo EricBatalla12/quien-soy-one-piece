@@ -182,8 +182,8 @@ test('el final revela los dos personajes y ofrece revancha', () => {
   const out = html({ view: viewOf(finished, 1) });
 
   assert.match(out, /¡Has ganado!/);
-  assert.match(out, /Eras <strong>Nico Robin<\/strong>/);
-  assert.match(out, /Nami era <strong>Zoro<\/strong>/);
+  assert.match(out, /Eras<\/span>\s*<strong>Nico Robin<\/strong>/);
+  assert.match(out, /Nami era<\/span>\s*<strong>Zoro<\/strong>/);
   assert.match(out, /id="rematch"/);
 });
 
@@ -233,7 +233,9 @@ test('cada respuesta del juego tiene su color en el CSS', () => {
 test('las clases nuevas de la v2 existen en el CSS', () => {
   const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
 
-  for (const selector of ['.code', '.score', '.notice', '.log', '.columns', '.entry', '.sr-only']) {
+  const selectors = ['.code', '.score', '.notice', '.log', '.columns', '.entry', '.sr-only',
+    '.pill', '.reveal', '.revealed', '.board'];
+  for (const selector of selectors) {
     assert.match(css, new RegExp(`\\${selector}[\\s,{]`), `falta ${selector} en el CSS`);
   }
 });
