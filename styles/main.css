@@ -516,6 +516,178 @@ blockquote {
   }
 }
 
+/* --- El tablero de pistas ----------------------------------------------- */
+
+.clues {
+  margin-top: 1.3rem;
+  padding: 0.9rem 1rem 1rem;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px dashed rgba(109, 86, 55, 0.4);
+  border-radius: 11px;
+}
+
+.clues h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft);
+}
+
+.clues-hint,
+.clues-empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.clue-board {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.5rem;
+  min-height: 2.6rem; /* sitio donde soltar aunque esté vacío */
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clue-board:empty {
+  margin: 0;
+}
+
+/* Mientras se arrastra encima, el tablero se enciende. */
+.clue-board.receiving {
+  outline: 2px solid var(--gold);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
+.clue {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  padding: 0.35rem 0.5rem 0.35rem 0.7rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6));
+  border: 1px solid rgba(109, 86, 55, 0.4);
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgba(90, 66, 30, 0.15);
+  cursor: grab;
+  touch-action: none; /* el dedo arrastra la pista, no la página */
+}
+
+.clue-text {
+  /* Una pregunta larga hace una pista de dos líneas, no una tira de un metro. */
+  max-width: 18rem;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.clue .answer {
+  margin-top: 0;
+  font-size: 0.72rem;
+}
+
+.clue-tools {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.clue-tools button {
+  padding: 0.05rem 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  box-shadow: none;
+}
+
+.clue-tools button:hover:not(:disabled) {
+  color: #fff;
+  background: var(--ink-soft);
+}
+
+.clue-tools button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* El hueco que se abre por donde va a caer la pista. */
+.clue-slot {
+  width: 3rem;
+  border: 2px dashed var(--gold);
+  border-radius: 999px;
+  background: rgba(217, 159, 40, 0.12);
+}
+
+/* La pista se queda apagada en su sitio mientras la llevas en la mano. */
+.dragging {
+  opacity: 0.35;
+}
+
+/* La copia que sigue al puntero. */
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  translate: -50% -50%;
+  pointer-events: none;
+  opacity: 0.95;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  rotate: -2deg;
+}
+
+/* Guardar una pregunta del historial sin arrastrarla. */
+.pin {
+  align-self: flex-start;
+  margin-left: 0.35rem;
+  padding: 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid rgba(109, 86, 55, 0.35);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.pin:hover {
+  color: #fff;
+  background: var(--ink-soft);
+}
+
+.pin[aria-pressed='true'] {
+  color: #fff;
+  background: var(--green);
+  border-color: #2c5c2b;
+}
+
+.entry {
+  cursor: grab;
+  touch-action: none;
+}
+
+.entry .answer {
+  margin-right: auto; /* la marca a un lado y el botón de guardar al otro */
+}
+
+.entry.mine,
+.entry.rival {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.entry .said {
+  flex: 1 0 100%;
+}
+
 /* --- Final -------------------------------------------------------------- */
 
 .final h2 {

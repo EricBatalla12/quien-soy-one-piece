@@ -64,6 +64,10 @@ acentos) son **exactamente las de la v1**. Lo que cambia es dónde se aplican.
 - **Secreto real**: el servidor no envía a un jugador el personaje que debe adivinar.
 - **Aviso en vivo de desconexión del rival**: "Nami se ha desconectado, esperando a
   que vuelva".
+- **Historial con desplazamiento propio**: a partir de cierto alto se desplaza por
+  dentro en lugar de estirar la página sin fin.
+- **Tablero de pistas**: una libreta personal donde guardar las respuestas que te
+  sirvan, arrastrándolas desde el historial, y ordenarlas a tu gusto.
 - Reconexión: recargar la pestaña recupera tu sitio y la partida.
 - Expiración explícita de salas inactivas o abandonadas.
 - Marcador de partidas ganadas dentro de la sala.
@@ -116,6 +120,7 @@ Todo en memoria, indexado por código de sala:
 |---|---|---|
 | Token de sala | `sessionStorage`, por código de sala | Recuperar tu sitio al recargar. Es por pestaña, así que dos pestañas del mismo navegador son dos jugadores distintos, igual que en la v1 |
 | Vista de la partida | Memoria | Lo último que envió el servidor; se pinta y ya |
+| Tablero de pistas | Memoria | Qué preguntas has guardado y en qué orden. **No sale del navegador**: no es parte de la partida, el rival no lo ve y no cambia ninguna regla. Guarda posiciones del historial, así que con la revancha se vacía solo |
 
 ### 5.3 La vista: qué recibe cada jugador
 
@@ -248,6 +253,12 @@ La v2 está terminada cuando todo esto se cumple:
 16. La revancha reinicia la partida en la misma sala y conserva el marcador.
 17. La interfaz se ve correctamente en una ventana de escritorio y no se rompe en
     pantalla de móvil.
+18. Tras muchas preguntas, el historial se desplaza por dentro y la página no crece
+    sin fin. Si estabas al final ves llegar lo nuevo; si habías subido a releer, te
+    quedas donde estabas.
+19. Una pregunta respondida se puede guardar en el tablero de pistas y ordenarla
+    allí, arrastrándola o con sus botones. El tablero es tuyo: no viaja al servidor
+    y el rival no lo ve.
 
 ## 9. Plan de trabajo
 

@@ -9,6 +9,8 @@
  */
 
 import { initialModel, reconnected, receive, sending, withStatus } from './app.js';
+import { isPinned, moveClue, noClues, pinClue, unpinClue } from './clues.js';
+import { trackDragging } from './ui/drag.js';
 import { connect, socketUrl } from './sync/connection.js';
 import { nextScrollTop } from './ui/scroll.js';
 import { clearSession, readSession, writeSession } from './session.js';
@@ -17,6 +19,22 @@ import { render } from './ui/render.js';
 const app = document.getElementById('app');
 
 let model = initialModel();
+
+/**
+ * Tu tablero de pistas. Vive aquí y no en el modelo porque no viene del servidor ni
+ * va hacia él: es una libreta tuya, en esta pestaña.
+ */
+let clues = noClues();
+
+/**
+ * Mientras arrastras no se repinta.
+ *
+ * La interfaz rehace la pantalla entera con cada mensaje, y si el rival responde a
+ * mitad de un arrastre, la pista que llevabas en la mano dejaría de existir. Lo que
+ * llegue se pinta al soltar.
+ */
+let dragging = false;
+let paintPending = false;
 
 const connection = connect({
   url: socketUrl(window.location),
@@ -65,10 +83,15 @@ function send(message) {
 }
 
 function paint() {
+  if (dragging) {
+    paintPending = true;
+    return;
+  }
+
   const typed = captureTyping();
   const scrolled = captureScroll();
 
-  app.innerHTML = render(model);
+  app.innerHTML = render({ ...model, clues });
 
   restoreTyping(typed);
   restoreScroll(scrolled);
@@ -156,13 +179,51 @@ app.addEventListener('submit', (event) => {
 });
 
 app.addEventListener('click', (event) => {
-  const answer = event.target.dataset.answer;
+  const button = event.target.closest('button');
+  if (button === null) return;
+
+  const { answer, pin, move } = button.dataset;
+
   if (answer !== undefined) {
     send({ type: 'answer', answer });
     return;
   }
 
-  if (event.target.id === 'rematch') send({ type: 'rematch' });
+  if (button.id === 'rematch') {
+    send({ type: 'rematch' });
+    return;
+  }
+
+  // El mismo botón guarda y quita: en el historial es un "+" y en el tablero una "×".
+  if (pin !== undefined) {
+    const index = Number(pin);
+    clues = isPinned(clues, index) ? unpinClue(clues, index) : pinClue(clues, index);
+    paint();
+    return;
+  }
+
+  if (move !== undefined) {
+    const [index, step] = move.split(':').map(Number);
+    clues = moveClue(clues, index, clues.indexOf(index) + step);
+    paint();
+  }
+});
+
+trackDragging({
+  root: app,
+  boardId: 'clue-board',
+  onDrop({ from, index, to }) {
+    // Arrastrada desde el historial, primero hay que guardarla; desde el tablero, ya está.
+    clues = moveClue(from === 'history' ? pinClue(clues, index) : clues, index, to);
+    paint();
+  },
+  onDraggingChange(active) {
+    dragging = active;
+    if (active || !paintPending) return;
+
+    paintPending = false;
+    paint();
+  },
 });
 
 function valueOf(selector) {

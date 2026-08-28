@@ -155,8 +155,8 @@ test('cada entrada del historial va a la columna de quien habló', () => {
   const theirs = html({ view: viewOf(game, 2) });
 
   // La misma partida, vista desde los dos lados: lo tuyo cambia de columna.
-  assert.match(mine, /class="entry mine">\s*<span class="who sr-only">Tú<\/span>\s*<span class="said">¿Eres espadachín\?/);
-  assert.match(theirs, /class="entry rival">\s*<span class="who sr-only">Eric<\/span>\s*<span class="said">¿Eres espadachín\?/);
+  assert.match(mine, /class="entry mine"[^>]*>\s*<span class="who sr-only">Tú<\/span>\s*<span class="said">¿Eres espadachín\?/);
+  assert.match(theirs, /class="entry rival"[^>]*>\s*<span class="who sr-only">Eric<\/span>\s*<span class="said">¿Eres espadachín\?/);
 });
 
 test('las columnas van encabezadas por los dos nombres', () => {
@@ -171,6 +171,86 @@ test('quien no ve la página se entera igual de quién habló', () => {
   const out = html({ view: viewOf(game, 2) });
 
   assert.match(out, /<span class="who sr-only">Eric<\/span>/);
+});
+
+// ---------------------------------------------------------------------------
+// El tablero de pistas
+// ---------------------------------------------------------------------------
+
+/** Partida con cuatro preguntas ya respondidas. */
+function asked() {
+  let game = startedGame();
+  for (const [player, text, answer] of [
+    [1, '¿Eres espadachín?', 'no'],
+    [2, '¿Llevas sombrero?', 'sí'],
+    [1, '¿Eres pirata?', 'sí'],
+    [2, '¿Usas una espada?', 'a veces'],
+  ]) {
+    game = askQuestion(game, player, text);
+    game = answerQuestion(game, player === 1 ? 2 : 1, answer);
+  }
+  return game;
+}
+
+test('el tablero vacío invita a llenarlo', () => {
+  const out = html({ view: viewOf(asked(), 1), clues: [] });
+
+  assert.match(out, /id="clue-board"/);
+  assert.match(out, /Tus pistas/);
+  assert.match(out, /El tablero está vacío/);
+  assert.ok(!out.includes('class="clue"'));
+});
+
+test('las pistas guardadas salen en tu orden, no en el del historial', () => {
+  const out = html({ view: viewOf(asked(), 1), clues: [2, 0] });
+  const order = [...out.matchAll(/class="clue" data-drag="(\d+)"/g)].map((m) => m[1]);
+
+  assert.deepEqual(order, ['2', '0']);
+  assert.ok(!out.includes('El tablero está vacío'));
+});
+
+test('cada pista lleva su pregunta y su respuesta', () => {
+  const out = html({ view: viewOf(asked(), 1), clues: [3] });
+
+  assert.match(out, /class="clue-text">¿Usas una espada\?/);
+  assert.match(out, /class="answer" data-value="sometimes">a veces/);
+});
+
+test('lo ya guardado se ve marcado en el historial', () => {
+  const out = html({ view: viewOf(asked(), 1), clues: [1] });
+
+  assert.match(out, /data-pin="1" aria-pressed="true"/);
+  assert.match(out, /data-pin="0" aria-pressed="false"/);
+});
+
+test('en los extremos no se puede seguir moviendo', () => {
+  const out = html({ view: viewOf(asked(), 1), clues: [2, 0, 3] });
+  const moves = [...out.matchAll(/data-move="(\d+:-?1)"[^>]*?(disabled)?>/g)].map((m) => [m[1], !!m[2]]);
+
+  assert.deepEqual(moves[0], ['2:-1', true], 'la primera no puede ir antes');
+  assert.deepEqual(moves.at(-1), ['3:1', true], 'la última no puede ir después');
+});
+
+test('una pista de una partida que ya no existe no se pinta', () => {
+  const out = html({ view: viewOf(asked(), 1), clues: [99] });
+
+  assert.ok(!out.includes('class="clue"'), 'la revancha vacía el tablero sola');
+  assert.match(out, /El tablero está vacío/);
+});
+
+test('el historial se puede arrastrar mientras se juega', () => {
+  const out = html({ view: viewOf(asked(), 1), clues: [] });
+
+  assert.match(out, /class="entry [^"]*" data-drag="0" data-from="history"/);
+});
+
+test('terminada la partida no hay nada que guardar', () => {
+  const finished = guess(asked(), 1, 'Nico Robin');
+  const out = html({ view: viewOf(finished, 1), clues: [1] });
+
+  assert.ok(!out.includes('id="clue-board"'), 'el tablero ya no sirve de nada');
+  assert.ok(!out.includes('data-pin'));
+  assert.ok(!out.includes('data-drag'));
 });
 
 // ---------------------------------------------------------------------------
@@ -234,7 +314,8 @@ test('las clases nuevas de la v2 existen en el CSS', () => {
   const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
 
   const selectors = ['.code', '.score', '.notice', '.log', '.columns', '.entry', '.sr-only',
-    '.pill', '.reveal', '.revealed', '.board'];
+    '.pill', '.reveal', '.revealed', '.board', '.clues', '.clue', '.clue-board', '.clue-slot',
+    '.drag-ghost', '.dragging', '.pin'];
   for (const selector of selectors) {
     assert.match(css, new RegExp(`\\${selector}[\\s,{]`), `falta ${selector} en el CSS`);
   }

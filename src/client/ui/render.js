@@ -51,8 +51,9 @@ const EMBLEM = `
 /**
  * `view` es null mientras no estés en ninguna sala: entonces se pide el nombre.
  * `status` es cómo está la conexión: 'connecting', 'online' u 'offline'.
+ * `clues` son las preguntas que has guardado en tu tablero, en tu orden.
  */
-export function render({ view, status, error }) {
+export function render({ view, status, error, clues = [] }) {
   return `
     <header>
       ${EMBLEM}
@@ -61,7 +62,7 @@ export function render({ view, status, error }) {
     </header>
     ${connectionNotice(status)}
     ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
-    ${view === null ? entryScreen() : roomScreen(view)}
+    ${view === null ? entryScreen() : roomScreen(view, clues)}
   `;
 }
 
@@ -112,14 +113,14 @@ function entryScreen() {
   `;
 }
 
-function roomScreen(view) {
+function roomScreen(view, clues) {
   const screen =
     view.phase === 'waiting'
       ? waitingScreen(view)
       : view.phase === 'setup'
         ? setupScreen(view)
         : view.phase === 'playing'
-          ? boardScreen(view)
+          ? boardScreen(view, clues)
           : endScreen(view);
 
   return `${rivalNotice(view)}${screen}`;
@@ -173,7 +174,7 @@ function setupScreen(view) {
   `;
 }
 
-function boardScreen(view) {
+function boardScreen(view, clues) {
   const rival = escapeHtml(view.rival.name);
   const pending = view.pendingQuestion;
 
@@ -216,7 +217,8 @@ function boardScreen(view) {
 
   return `
     <p class="mission">Tienes que averiguar qué personaje eres.</p>
-    ${historyList(view)}
+    ${historyList(view, clues)}
+    ${clueBoard(view, clues)}
     ${actions}
   `;
 }
@@ -251,13 +253,17 @@ function endScreen(view) {
   `;
 }
 
-function historyList(view) {
+/**
+ * El historial. Con `clues` se puede guardar cada pregunta en el tablero; sin ellas
+ * —la partida ya ha terminado— es solo el registro de lo que pasó.
+ */
+function historyList(view, clues = null) {
   if (view.history.length === 0) {
     return `<p class="history-empty">Todavía no se ha preguntado nada.</p>`;
   }
 
   const rows = view.history
-    .map((entry) => {
+    .map((entry, index) => {
       const isMine = entry.from === view.you.id;
       const who = isMine ? 'Tú' : escapeHtml(view.rival.name);
       const said =
@@ -265,13 +271,17 @@ function historyList(view) {
           ? `${isMine ? 'te arriesgaste' : 'se arriesgó'} con «${escapeHtml(entry.text)}»`
           : `${escapeHtml(entry.text)}`;
       const key = escapeHtml(answerKey(entry.answer));
+      const pinned = clues !== null && clues.includes(index);
 
       // El nombre se repite en cada entrada aunque la columna ya lo diga: quien
       // navegue con lector de pantalla no ve columnas, solo oye la lista.
-      return `<li class="entry ${isMine ? 'mine' : 'rival'}">
+      const draggable = clues === null ? '' : ` data-drag="${index}" data-from="history"`;
+
+      return `<li class="entry ${isMine ? 'mine' : 'rival'}"${draggable}>
         <span class="who sr-only">${who}</span>
         <span class="said">${said}</span>
         <span class="answer" data-value="${key}">${escapeHtml(entry.answer)}</span>
+        ${clues === null ? '' : pinButton(index, pinned)}
       </li>`;
     })
     .join('');
@@ -284,6 +294,64 @@ function historyList(view) {
       </div>
       <ol class="history">${rows}</ol>
     </div>
+  `;
+}
+
+/**
+ * Guardar una pregunta en el tablero sin arrastrarla.
+ *
+ * Arrastrar es lo cómodo con un ratón, pero no todo el mundo puede: con el teclado
+ * no hay forma de arrastrar nada, y en una pantalla táctil es un gesto delicado.
+ * Este botón hace lo mismo de un toque.
+ */
+function pinButton(index, pinned) {
+  const label = pinned ? 'Quitar de tus pistas' : 'Guardar como pista';
+
+  return `<button type="button" class="pin" data-pin="${index}" aria-pressed="${pinned}"
+    title="${label}" aria-label="${label}">${pinned ? '✓' : '+'}</button>`;
+}
+
+/**
+ * El tablero de pistas: tu libreta.
+ *
+ * No es parte de la partida y el rival no lo ve. Sirve para sacar del historial las
+ * respuestas que te dicen algo y tenerlas juntas, en el orden que a ti te sirva,
+ * mientras el historial sigue creciendo por su cuenta.
+ */
+function clueBoard(view, clues) {
+  const pinned = clues.filter((index) => index < view.history.length);
+
+  const tags = pinned
+    .map((index, position) => {
+      const entry = view.history[index];
+      const key = escapeHtml(answerKey(entry.answer));
+      const text =
+        entry.kind === 'guess' ? `«${escapeHtml(entry.text)}»` : escapeHtml(entry.text);
+
+      return `<li class="clue" data-drag="${index}" data-from="board">
+        <span class="clue-text">${text}</span>
+        <span class="answer" data-value="${key}">${escapeHtml(entry.answer)}</span>
+        <span class="clue-tools">
+          <button type="button" data-move="${index}:-1" title="Mover antes"
+            aria-label="Mover antes" ${position === 0 ? 'disabled' : ''}>◀</button>
+          <button type="button" data-move="${index}:1" title="Mover después"
+            aria-label="Mover después" ${position === pinned.length - 1 ? 'disabled' : ''}>▶</button>
+          <button type="button" data-pin="${index}" title="Quitar de tus pistas"
+            aria-label="Quitar de tus pistas">×</button>
+        </span>
+      </li>`;
+    })
+    .join('');
+
+  return `
+    <section class="clues">
+      <h3>Tus pistas</h3>
+      <p class="clues-hint">
+        Arrastra aquí las respuestas que te sirvan, o pulsa su <b>+</b>. Ordénalas como quieras.
+      </p>
+      <ol class="clue-board" id="clue-board">${tags}</ol>
+      ${pinned.length === 0 ? '<p class="clues-empty">El tablero está vacío.</p>' : ''}
+    </section>
   `;
 }
 
