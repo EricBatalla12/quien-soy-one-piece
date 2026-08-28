@@ -109,28 +109,28 @@ function showFatal(message) {
 app.addEventListener('submit', (event) => {
   event.preventDefault();
 
-  const text = new FormData(event.target).get('texto');
+  const text = new FormData(event.target).get('text');
   const me = channel.playerId;
 
   switch (event.target.id) {
-    case 'form-secreto':
+    case 'secret-form':
       apply((s) => setSecret(s, me, text));
       break;
-    case 'form-pregunta':
+    case 'question-form':
       apply((s) => askQuestion(s, me, text));
       break;
-    case 'form-adivinar':
+    case 'guess-form':
       apply((s) => guess(s, me, text));
       break;
   }
 });
 
 app.addEventListener('click', (event) => {
-  const answer = event.target.dataset.respuesta;
+  const answer = event.target.dataset.answer;
   if (answer !== undefined) {
     apply((s) => answerQuestion(s, channel.playerId, answer));
     return;
   }
 
-  if (event.target.id === 'reiniciar') apply(() => reset());
+  if (event.target.id === 'restart') apply(() => reset());
 });

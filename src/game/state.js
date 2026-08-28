@@ -37,13 +37,13 @@ export function setSecret(state, player, name) {
   if (state.phase !== 'setup') throw new Error('La preparación ya ha terminado');
   if (isBlank(name)) throw new Error('El personaje no puede estar vacío');
 
-  const rival = opponent(player);
-  if (state.secretFor[rival] !== null) throw new Error('Ya has elegido personaje');
+  const rivalId = opponent(player);
+  if (state.secretFor[rivalId] !== null) throw new Error('Ya has elegido personaje');
 
-  const secretFor = { ...state.secretFor, [rival]: name.trim() };
-  const listos = secretFor[1] !== null && secretFor[2] !== null;
+  const secretFor = { ...state.secretFor, [rivalId]: name.trim() };
+  const bothReady = secretFor[1] !== null && secretFor[2] !== null;
 
-  return { ...state, secretFor, phase: listos ? 'playing' : 'setup' };
+  return { ...state, secretFor, phase: bothReady ? 'playing' : 'setup' };
 }
 
 /** El jugador de turno hace una pregunta al rival. */
@@ -81,13 +81,13 @@ export function guess(state, player, name) {
   requireActivePlayer(state, player);
   if (isBlank(name)) throw new Error('El nombre no puede estar vacío');
 
-  const acierta = sameName(name, state.secretFor[player]);
+  const isRight = sameName(name, state.secretFor[player]);
   const history = [
     ...state.history,
-    { kind: 'guess', from: player, text: name.trim(), answer: acierta ? 'sí' : 'no' },
+    { kind: 'guess', from: player, text: name.trim(), answer: isRight ? 'sí' : 'no' },
   ];
 
-  if (acierta) return { ...state, phase: 'finished', winner: player, history };
+  if (isRight) return { ...state, phase: 'finished', winner: player, history };
   return { ...state, turn: opponent(player), history };
 }
 
@@ -115,9 +115,9 @@ export function reconcile(local, remote) {
     1: local.secretFor[1] ?? remote.secretFor[1],
     2: local.secretFor[2] ?? remote.secretFor[2],
   };
-  const listos = secretFor[1] !== null && secretFor[2] !== null;
+  const bothReady = secretFor[1] !== null && secretFor[2] !== null;
 
-  return { ...local, secretFor, phase: listos ? 'playing' : 'setup' };
+  return { ...local, secretFor, phase: bothReady ? 'playing' : 'setup' };
 }
 
 /**

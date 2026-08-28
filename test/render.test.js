@@ -84,34 +84,34 @@ test('un historial con un remitente manipulado no inyecta HTML', () => {
 
 test('a quien le toca se le ofrecen preguntar y arriesgar', () => {
   const html = render(partida(), 1, null);
-  assert.ok(html.includes('form-pregunta'));
-  assert.ok(html.includes('form-adivinar'));
+  assert.ok(html.includes('question-form'));
+  assert.ok(html.includes('guess-form'));
 });
 
 test('a quien no le toca no se le ofrece ninguna acción', () => {
   const html = render(partida(), 2, null);
-  assert.ok(!html.includes('form-pregunta'));
-  assert.ok(!html.includes('form-adivinar'));
+  assert.ok(!html.includes('question-form'));
+  assert.ok(!html.includes('guess-form'));
 });
 
 test('a quien le preguntan se le ofrecen las tres respuestas', () => {
   const html = render(askQuestion(partida(), 1, '¿Eres espadachín?'), 2, null);
 
-  assert.ok(html.includes('data-respuesta="sí"'));
-  assert.ok(html.includes('data-respuesta="no"'));
-  assert.ok(html.includes('data-respuesta="a veces"'));
+  assert.ok(html.includes('data-answer="sí"'));
+  assert.ok(html.includes('data-answer="no"'));
+  assert.ok(html.includes('data-answer="a veces"'));
 });
 
 test('quien preguntó no puede responderse a sí mismo', () => {
   const html = render(askQuestion(partida(), 1, '¿Eres espadachín?'), 1, null);
-  assert.ok(!html.includes('data-respuesta'));
+  assert.ok(!html.includes('data-answer'));
 });
 
 test('una tercera pestaña recibe un aviso en vez del juego', () => {
   const html = render(partida(), null, null);
 
   assert.ok(html.includes('Ya hay dos jugadores'));
-  assert.ok(!html.includes('form-pregunta'));
+  assert.ok(!html.includes('question-form'));
 });
 
 test('el motivo del rechazo se enseña cuando lo hay', () => {
@@ -141,7 +141,7 @@ test('cada respuesta lleva su marca para poder distinguirla en pantalla', () => 
   let state = askQuestion(partida(), 1, '¿Eres espadachín?');
   state = answerQuestion(state, 2, 'a veces');
 
-  assert.ok(render(state, 1, null).includes('data-valor="a-veces"'));
+  assert.ok(render(state, 1, null).includes('data-value="sometimes"'));
 });
 
 // El color de cada respuesta vive en el CSS y la clave en el JavaScript: dos sitios
@@ -154,17 +154,17 @@ test('las tres respuestas tienen clave propia y color en el CSS', () => {
   for (const answer of ANSWERS) {
     const clave = answerKey(answer);
 
-    assert.notEqual(clave, 'desconocida', `«${answer}» no tiene clave asignada`);
+    assert.notEqual(clave, 'unknown', `«${answer}» no tiene clave asignada`);
     assert.ok(!claves.has(clave), `«${answer}» repite la clave «${clave}»`);
     claves.add(clave);
 
     assert.ok(
-      css.includes(`[data-valor='${clave}']`) || css.includes(`[data-valor="${clave}"]`),
+      css.includes(`[data-value='${clave}']`) || css.includes(`[data-value="${clave}"]`),
       `falta el color de «${clave}» en styles/main.css`,
     );
   }
 });
 
 test('una respuesta que no existe en el juego no finge tener color', () => {
-  assert.equal(answerKey('quizá'), 'desconocida');
+  assert.equal(answerKey('quizá'), 'unknown');
 });
