@@ -6,15 +6,31 @@ Cada jugador escribe en secreto el personaje que su rival deberá adivinar. Por 
 se hacen preguntas que se responden con **Sí**, **No** o **A veces**, hasta que alguien
 se atreve a arriesgar un nombre.
 
+**▶ Jugar: https://ericbatalla12.github.io/quien-soy-one-piece/**
+
+Ábrelo en **dos pestañas** del mismo navegador, una por jugador.
+
 ## Estado
 
-🚧 **En desarrollo.** La v1 todavía no está implementada.
+✅ **v1 terminada.** Cumple los diez criterios de aceptación de la especificación.
 
 Este repositorio empieza por la especificación, antes que por el código:
 
 - [`docs/ESPEC.md`](docs/ESPEC.md) — qué se construye, qué queda fuera y cuándo se
   considera terminado.
 - [`CLAUDE.md`](CLAUDE.md) — reglas de trabajo dentro del repositorio.
+
+## Desarrollo
+
+No tiene ninguna dependencia. Hace falta Node solo para ejecutar los tests.
+
+```bash
+npm test      # reglas del juego
+npm run dev   # sirve el juego en http://localhost:8000
+```
+
+Abrir el `index.html` con `file://` **no funciona**: el origen opaco de los ficheros
+locales impide que las pestañas se comuniquen. Hay que servirlo por HTTP.
 
 ## Cómo se juega
 
