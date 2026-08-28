@@ -12,6 +12,11 @@ Juego web de "¿Quién soy?" para dos jugadores en dos pestañas del mismo naveg
   aceptación (sección 8 de la espec) y di cuáles cumple.
 - Trabajamos por piezas pequeñas, con un commit por pieza. No encadenes varias
   funcionalidades en una sola tanda de cambios.
+- Toda capa necesita tests. Si algo parece no testeable porque depende del navegador,
+  extrae la parte pura y testea esa (como `reconcile` o `choosePlayerId`). "Lo he
+  probado a mano" no cuenta como verificado: los doce fallos de la auditoría estaban
+  justo en los dos ficheros que no tenían tests.
+- Los renombrados van en su propio commit, sin cambios de comportamiento.
 
 ## Convenciones
 
@@ -20,11 +25,10 @@ Juego web de "¿Quién soy?" para dos jugadores en dos pestañas del mismo naveg
 
 ## Comandos
 
-- `npm test` — ejecuta los tests de la lógica pura (`node --test`, pueden haber dependecias, por ejemplo ws).
+- `npm test` — ejecuta los tests (`node --test`).
 - `npm run dev` — sirve el juego en http://localhost:8000 con `python3 -m http.server`.
 
-El proyecto **no tiene ninguna dependencia** y no queremos que las tenga. Módulos ES
-nativos, sin empaquetador. Si crees que hace falta instalar algo, pregunta antes.
+El v1 no tiene ninguna dependencia y así se queda. El v2 con servidor necesitará al menos una (ws o equivalente): añade solo las imprescindibles y pregunta antes de cada una.
 
 Abrir el `index.html` directamente con `file://` **no funciona**: el origen opaco
 rompe `BroadcastChannel`. Hay que servirlo por HTTP.
