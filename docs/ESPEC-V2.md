@@ -32,7 +32,7 @@ sincronización y dos formas del estado no compensa.
 
 1. **Entrada.** Cada jugador escribe su nombre y elige entre *crear sala* o *entrar
    con un código*.
-2. **Sala.** Quien crea recibe un código de 5 letras (p. ej. `GOMUX`) y espera. Se lo
+2. **Sala.** Quien crea recibe un código de 5 letras (p. ej. `NAKAM`) y espera. Se lo
    dicta al rival por el medio que quiera; el juego no manda nada por su cuenta.
    Cuando el segundo jugador entra con ese código, empieza la preparación.
 3. **Preparación.** Cada jugador escribe en secreto el personaje que el rival deberá
@@ -191,7 +191,9 @@ sincronización a cambio de unos bytes de más.
   desconexión y la partida se queda como estaba, esperando.
 - Una sala se destruye cuando pasan **15 minutos sin actividad**, tanto si está
   esperando rival como si está a medias con alguien desconectado. A quien siga
-  conectado se le avisa con `expired`.
+  conectado se le avisa con `expired`. El plazo mide abandono, no lentitud: mientras
+  los dos jugadores estén conectados la sala no caduca, por mucho que uno se tome su
+  tiempo en preguntar.
 - Nadie más puede ocupar la plaza de un jugador desconectado mientras la sala viva.
   Un tercero que entre con el código recibe un `error`: la sala está llena.
 
