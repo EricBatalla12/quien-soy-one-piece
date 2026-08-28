@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { choosePlayerId } from '../src/sync/channel.js';
+import { choosePlayerId } from '../src/client/sync/channel.js';
 
 const NADIE = new Set();
 

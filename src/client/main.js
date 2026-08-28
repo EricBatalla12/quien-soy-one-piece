@@ -11,7 +11,7 @@ import {
   guess,
   reset,
   reconcile,
-} from './game/state.js';
+} from '../game/state.js';
 import { connect } from './sync/channel.js';
 import { render } from './ui/render.js';
 

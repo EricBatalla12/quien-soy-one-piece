@@ -5,7 +5,7 @@
  * tiene que adivinar. Sí se pinta el del rival, porque lo escribió él mismo.
  */
 
-import { ANSWERS, opponent } from '../game/state.js';
+import { ANSWERS, opponent } from '../../game/state.js';
 
 /**
  * Clave con la que cada respuesta se pinta de un color.

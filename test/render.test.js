@@ -16,7 +16,7 @@ import {
   answerQuestion,
   guess,
 } from '../src/game/state.js';
-import { render, answerKey } from '../src/ui/render.js';
+import { render, answerKey } from '../src/client/ui/render.js';
 
 /**
  * Partida en marcha:

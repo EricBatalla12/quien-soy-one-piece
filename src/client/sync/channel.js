@@ -24,7 +24,7 @@
  * que no existan dos copias que haya que mantener a mano en sintonía.
  */
 
-import { isValidState } from '../game/state.js';
+import { isValidState } from '../../game/state.js';
 
 /**
  * Publicado en GitHub Pages, TODOS los proyectos de una cuenta comparten el mismo
