@@ -10,6 +10,7 @@
 
 import { initialModel, reconnected, receive, sending, withStatus } from './app.js';
 import { connect, socketUrl } from './sync/connection.js';
+import { nextScrollTop } from './ui/scroll.js';
 import { clearSession, readSession, writeSession } from './session.js';
 import { render } from './ui/render.js';
 
@@ -65,8 +66,33 @@ function send(message) {
 
 function paint() {
   const typed = captureTyping();
+  const scrolled = captureScroll();
+
   app.innerHTML = render(model);
+
   restoreTyping(typed);
+  restoreScroll(scrolled);
+}
+
+/**
+ * El historial se desplaza por dentro, así que hay que devolverlo a su sitio: si no,
+ * cada mensaje del rival te llevaría de vuelta a la primera pregunta de la partida.
+ */
+function captureScroll() {
+  const log = app.querySelector('.history');
+  if (log === null) return null;
+
+  return { scrollTop: log.scrollTop, scrollHeight: log.scrollHeight, clientHeight: log.clientHeight };
+}
+
+function restoreScroll(before) {
+  const log = app.querySelector('.history');
+  if (log === null) return;
+
+  log.scrollTop = nextScrollTop(before, {
+    scrollHeight: log.scrollHeight,
+    clientHeight: log.clientHeight,
+  });
 }
 
 /**

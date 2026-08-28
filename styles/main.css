@@ -424,13 +424,33 @@ blockquote {
 /* Una fila por entrada, y no una rejilla de dos columnas: con la rejilla, dos
    mensajes seguidos de jugadores distintos caían en la misma fila y dejaban de
    verse cuál fue antes. Así la conversación se lee siempre de arriba abajo. */
+/*
+ * A partir de cierto alto el historial se desplaza por dentro en vez de estirar la
+ * página. En una partida larga, sin esto, el pergamino se hacía tan alto que para
+ * escribir la siguiente pregunta había que bajar por decenas de preguntas viejas.
+ */
 .history {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  max-height: clamp(13rem, 46vh, 26rem);
+  overflow-y: auto;
+  overscroll-behavior: contain; /* al llegar al final, la rueda no arrastra la página */
   margin: 0.7rem 0 0;
-  padding: 0;
+  padding: 0.2rem 0.5rem 0.2rem 0.2rem;
   list-style: none;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(109, 86, 55, 0.45) transparent;
+}
+
+.history::-webkit-scrollbar {
+  width: 8px;
+}
+
+.history::-webkit-scrollbar-thumb {
+  background: rgba(109, 86, 55, 0.45);
+  border-radius: 999px;
 }
 
 .entry {
