@@ -12,7 +12,7 @@ test('la raíz es el juego', () => {
 test('se sirve lo que necesita el navegador', () => {
   assert.equal(publicPath('/styles/main.css'), 'styles/main.css');
   assert.equal(publicPath('/src/client/main.js'), 'src/client/main.js');
-  assert.equal(publicPath('/src/game/state.js'), 'src/game/state.js');
+  assert.equal(publicPath('/src/client/ui/render.js'), 'src/client/ui/render.js');
 });
 
 test('no se sirve nada más del repositorio', () => {
@@ -21,6 +21,7 @@ test('no se sirve nada más del repositorio', () => {
     '/CLAUDE.md',
     '/docs/ESPEC-V2.md',
     '/src/server/server.js',
+    '/src/game/state.js',
     '/src/server/lobby.js',
     '/node_modules/ws/package.json',
     '/.env',

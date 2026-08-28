@@ -1,11 +1,11 @@
 /**
- * Estado → HTML. Esta capa no decide reglas: solo enseña lo que hay.
+ * Vista → HTML. Esta capa no decide reglas: solo enseña lo que el servidor manda.
  *
- * Nunca se pinta `secretFor[playerId]`: es justo el personaje que este jugador
- * tiene que adivinar. Sí se pinta el del rival, porque lo escribió él mismo.
+ * En la v1 aquí había que tener cuidado de no pintar el personaje que el jugador
+ * debía adivinar, porque la pestaña lo tenía delante. Ahora no está: la vista que
+ * llega no lo trae hasta que la partida termina (ver `src/game/view.js`). Este
+ * fichero ya no puede filtrar nada aunque se equivoque.
  */
-
-import { ANSWERS, opponent } from '../../game/state.js';
 
 /**
  * Clave con la que cada respuesta se pinta de un color.
@@ -21,6 +21,9 @@ const ANSWER_KEYS = new Map([
   ['no', 'no'],
   ['a veces', 'sometimes'],
 ]);
+
+/** Las tres respuestas, en el orden en que se pintan los botones. */
+const ANSWERS = [...ANSWER_KEYS.keys()];
 
 export function answerKey(answer) {
   return ANSWER_KEYS.get(answer) ?? 'unknown';
@@ -45,63 +48,138 @@ const EMBLEM = `
   </svg>
 `;
 
-export function render(state, playerId, error) {
-  if (playerId === null) {
-    return `<p class="notice">Ya hay dos jugadores en esta partida. Cierra alguna pestaña y recarga.</p>`;
-  }
-
-  const screen =
-    state.phase === 'setup'
-      ? setupScreen(state, playerId)
-      : state.phase === 'playing'
-        ? boardScreen(state, playerId)
-        : endScreen(state, playerId);
-
+/**
+ * `view` es null mientras no estés en ninguna sala: entonces se pide el nombre.
+ * `status` es cómo está la conexión: 'connecting', 'online' u 'offline'.
+ */
+export function render({ view, status, error }) {
   return `
     <header>
       ${EMBLEM}
       <h1>¿Quién soy?</h1>
-      <p class="player">Jugador ${playerId}</p>
+      <p class="player">${headerLine(view)}</p>
     </header>
+    ${connectionNotice(status)}
     ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
-    ${screen}
+    ${view === null ? entryScreen() : roomScreen(view)}
   `;
 }
 
-function setupScreen(state, playerId) {
-  const rivalId = opponent(playerId);
-  const hasChosen = state.secretFor[rivalId] !== null;
+function headerLine(view) {
+  if (view === null) return 'Dos jugadores, dos secretos';
 
-  if (hasChosen) {
+  const room = `Sala ${escapeHtml(view.code)}`;
+  const you = escapeHtml(view.you.name);
+  if (view.rival === null) return `${you} · ${room}`;
+
+  const score = `${view.score[view.you.id]}–${view.score[view.rival.id]}`;
+  return `${you} contra ${escapeHtml(view.rival.name)} · ${room} · ${score}`;
+}
+
+function connectionNotice(status) {
+  if (status === 'online') return '';
+
+  const message =
+    status === 'connecting'
+      ? 'Conectando con el servidor…'
+      : 'Sin conexión. Reintentando… tu sitio en la sala te espera.';
+
+  return `<p class="notice">${message}</p>`;
+}
+
+function entryScreen() {
+  return `
+    <section>
+      <h2>Al abordaje</h2>
+      <p>
+        Uno crea la sala y le dicta el código a la otra persona. Podéis estar en
+        ordenadores distintos.
+      </p>
+      <form id="create-form">
+        <input id="name-input" name="name" type="text" autocomplete="off" maxlength="20"
+          placeholder="Tu nombre" required />
+        <button type="submit">Crear sala</button>
+      </form>
+      <p class="or">o entra en una sala que ya exista</p>
+      <form id="join-form">
+        <input id="code-input" name="code" type="text" autocomplete="off" maxlength="5"
+          placeholder="Código" required />
+        <button type="submit">Entrar</button>
+      </form>
+    </section>
+  `;
+}
+
+function roomScreen(view) {
+  const screen =
+    view.phase === 'waiting'
+      ? waitingScreen(view)
+      : view.phase === 'setup'
+        ? setupScreen(view)
+        : view.phase === 'playing'
+          ? boardScreen(view)
+          : endScreen(view);
+
+  return `${rivalNotice(view)}${screen}`;
+}
+
+/** Que el rival se haya caído se avisa siempre, se esté en la fase que se esté. */
+function rivalNotice(view) {
+  if (view.rival === null || view.rival.connected) return '';
+
+  return `<p class="notice">
+    ${escapeHtml(view.rival.name)} se ha desconectado. Esperando a que vuelva…
+  </p>`;
+}
+
+function waitingScreen(view) {
+  return `
+    <section>
+      <h2>Sala creada</h2>
+      <p>Dile este código a quien vaya a jugar contigo:</p>
+      <p class="code">${escapeHtml(view.code)}</p>
+      <p class="waiting">Esperando a que entre alguien…</p>
+    </section>
+  `;
+}
+
+function setupScreen(view) {
+  const rival = escapeHtml(view.rival.name);
+
+  if (view.chosenForRival !== null) {
     return `
       <section>
-        <p>Has elegido <strong>${escapeHtml(state.secretFor[rivalId])}</strong> para tu rival.</p>
-        <p class="waiting">Esperando a que el jugador ${rivalId} elija el tuyo…</p>
+        <p>Has elegido <strong>${escapeHtml(view.chosenForRival)}</strong> para ${rival}.</p>
+        <p class="waiting">Esperando a que ${rival} elija el tuyo…</p>
       </section>
     `;
   }
 
   return `
     <section>
-      <h2>Elige el personaje del jugador ${rivalId}</h2>
-      <p>Escribe el personaje que tu rival tendrá que adivinar. No dejes que lo vea.</p>
+      <h2>Elige el personaje de ${rival}</h2>
+      <p>
+        Escribe el personaje que ${rival} tendrá que adivinar.
+        ${view.rivalHasChosen ? 'El tuyo ya está elegido.' : ''}
+      </p>
       <form id="secret-form">
-        <input id="secret-input" name="text" type="text" autocomplete="off" placeholder="Roronoa Zoro" required />
+        <input id="secret-input" name="text" type="text" autocomplete="off" maxlength="200"
+          placeholder="Roronoa Zoro" required />
         <button type="submit">Listo</button>
       </form>
     </section>
   `;
 }
 
-function boardScreen(state, playerId) {
-  const isMyTurn = state.turn === playerId;
-  const pending = state.pendingQuestion;
+function boardScreen(view) {
+  const rival = escapeHtml(view.rival.name);
+  const pending = view.pendingQuestion;
 
   let actions;
-  if (pending !== null && pending.from !== playerId) {
+  if (pending !== null && pending.from !== view.you.id) {
     actions = `
       <section class="actions">
-        <h2>Te preguntan:</h2>
+        <h2>${rival} pregunta:</h2>
         <blockquote>${escapeHtml(pending.text)}</blockquote>
         <div class="answers">
           ${ANSWERS.map(
@@ -112,54 +190,63 @@ function boardScreen(state, playerId) {
       </section>
     `;
   } else if (pending !== null) {
-    actions = `<p class="waiting">Esperando a que el jugador ${opponent(playerId)} responda…</p>`;
-  } else if (isMyTurn) {
+    actions = `<p class="waiting">Esperando a que ${rival} responda…</p>`;
+  } else if (view.turn === view.you.id) {
     actions = `
       <section class="actions">
         <h2>Es tu turno</h2>
         <form id="question-form">
-          <input id="question-input" name="text" type="text" autocomplete="off" placeholder="¿Eres espadachín?" required />
+          <input id="question-input" name="text" type="text" autocomplete="off" maxlength="200"
+            placeholder="¿Eres espadachín?" required />
           <button type="submit">Preguntar</button>
         </form>
         <p class="or">o arriésgate</p>
         <form id="guess-form">
-          <input id="guess-input" name="text" type="text" autocomplete="off" placeholder="Creo que soy…" required />
+          <input id="guess-input" name="text" type="text" autocomplete="off" maxlength="200"
+            placeholder="Creo que soy…" required />
           <button type="submit">Adivinar</button>
         </form>
       </section>
     `;
   } else {
-    actions = `<p class="waiting">Turno del jugador ${state.turn}…</p>`;
+    actions = `<p class="waiting">Turno de ${rival}…</p>`;
   }
 
   return `
     <p class="mission">Tienes que averiguar qué personaje eres.</p>
-    ${historyList(state, playerId)}
+    ${historyList(view)}
     ${actions}
   `;
 }
 
-function endScreen(state, playerId) {
-  const iWon = state.winner === playerId;
+function endScreen(view) {
+  const iWon = view.winner === view.you.id;
+  const rival = escapeHtml(view.rival.name);
+
   return `
     <section class="final">
-      <h2>${iWon ? '¡Has ganado!' : `Ha ganado el jugador ${state.winner}`}</h2>
-      <p>Eras <strong>${escapeHtml(state.secretFor[playerId])}</strong>.</p>
-      ${historyList(state, playerId)}
-      <button type="button" id="restart">Jugar otra vez</button>
+      <h2>${iWon ? '¡Has ganado!' : `Ha ganado ${rival}`}</h2>
+      <p>Eras <strong>${escapeHtml(view.yourCharacter)}</strong>.</p>
+      <p>${rival} era <strong>${escapeHtml(view.chosenForRival)}</strong>.</p>
+      <p class="score">
+        ${escapeHtml(view.you.name)} ${view.score[view.you.id]} –
+        ${view.score[view.rival.id]} ${rival}
+      </p>
+      ${historyList(view)}
+      <button type="button" id="rematch">Otra partida</button>
     </section>
   `;
 }
 
-function historyList(state, playerId) {
-  if (state.history.length === 0) {
+function historyList(view) {
+  if (view.history.length === 0) {
     return `<p class="history-empty">Todavía no se ha preguntado nada.</p>`;
   }
 
-  const rows = state.history
+  const rows = view.history
     .map((entry) => {
-      const isMine = entry.from === playerId;
-      const who = isMine ? 'Tú' : `Jugador ${escapeHtml(entry.from)}`;
+      const isMine = entry.from === view.you.id;
+      const who = isMine ? 'Tú' : escapeHtml(view.rival.name);
       const said =
         entry.kind === 'guess'
           ? `${isMine ? 'te arriesgaste' : 'se arriesgó'} con «${escapeHtml(entry.text)}»`
@@ -173,9 +260,10 @@ function historyList(state, playerId) {
 }
 
 /**
- * Las preguntas y los nombres los escriben los jugadores, así que podrían contener
- * HTML. Se escapan antes de meterlos en la página: si no, escribir <script> en una
- * pregunta ejecutaría código en la pestaña del rival.
+ * Las preguntas, los nombres de personaje y ahora también los nombres de los
+ * jugadores los escriben personas, así que podrían contener HTML. Se escapan antes
+ * de meterlos en la página: si no, llamarse <script> ejecutaría código en la
+ * pantalla del rival.
  */
 function escapeHtml(text) {
   return String(text)

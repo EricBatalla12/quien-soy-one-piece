@@ -154,6 +154,14 @@ input[type='text'] {
   border-radius: 7px;
 }
 
+#code-input {
+  flex: 0 1 9rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-weight: 700;
+}
+
 input[type='text']:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 1px;
@@ -229,13 +237,44 @@ blockquote {
   border-radius: 9px;
 }
 
-.error,
-.notice {
+.error {
   margin: 1rem 0 0;
   padding: 0.7rem 1rem;
   color: #fff;
   background: var(--red);
   border-radius: 7px;
+}
+
+/* Avisos que no son culpa de nadie: conexión, caídas, salas caducadas. */
+.notice {
+  margin: 1rem 0 0;
+  padding: 0.7rem 1rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.45);
+  border: 2px solid var(--gold);
+  border-radius: 7px;
+}
+
+/* El código de sala se dicta en voz alta: grande y bien espaciado. */
+.code {
+  margin: 0.8rem 0;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  font-size: clamp(2rem, 9vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em; /* compensa el espaciado del último carácter */
+  color: #7a2f1c;
+  background: rgba(255, 255, 255, 0.5);
+  border: 3px double #b99a63;
+  border-radius: 9px;
+  user-select: all; /* un toque lo selecciona entero para copiarlo */
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
 }
 
 .history-empty {
@@ -304,7 +343,7 @@ blockquote {
   font-size: 1.15rem;
 }
 
-.final #restart {
+.final #rematch {
   display: block;
   margin: 1.4rem auto 0;
 }

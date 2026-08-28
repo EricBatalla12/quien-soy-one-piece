@@ -1,77 +1,78 @@
 /**
- * Une las tres capas: escucha al usuario, aplica las reglas, difunde el resultado
- * y vuelve a pintar.
+ * Une las capas del navegador: escucha al usuario, manda la acción al servidor y
+ * pinta lo que el servidor conteste.
+ *
+ * Aquí no se decide nada. En la v1 este fichero aplicaba la jugada y luego la
+ * difundía; ahora la jugada la aplica el servidor y qué hacer con su respuesta lo
+ * decide `app.js`, que es puro y está testeado. Lo que queda es el pegamento con el
+ * navegador: el DOM, el almacén y el socket.
  */
 
-import {
-  createGame,
-  setSecret,
-  askQuestion,
-  answerQuestion,
-  guess,
-  reset,
-  reconcile,
-} from '../game/state.js';
-import { connect } from './sync/channel.js';
+import { initialModel, reconnected, receive, sending, withStatus } from './app.js';
+import { connect, socketUrl } from './sync/connection.js';
+import { clearSession, readSession, writeSession } from './session.js';
 import { render } from './ui/render.js';
 
 const app = document.getElementById('app');
 
-let state = createGame();
-let error = null;
-let channel = null;
+let model = initialModel();
 
-try {
-  // getState: el canal no guarda la partida, se la pide a quien la tiene.
-  channel = await connect({ onRemoteState, getState: () => state });
-} catch (cause) {
-  showFatal(
-    'No se ha podido abrir el canal entre pestañas. Si has abierto el fichero ' +
-      'directamente, sírvelo por HTTP con <code>npm run dev</code>.',
-  );
-  throw cause;
-}
+const connection = connect({
+  url: socketUrl(window.location),
+  onOpen: presentToken,
+  onMessage: handle,
+  onStatus: (status) => {
+    model = withStatus(model, status);
+    paint();
+  },
+});
 
-// Puede haber llegado estado durante la conexión, así que se combina en vez de pisar.
-if (channel.initialState !== null) state = reconcile(state, channel.initialState);
 paint();
 
-/** La otra pestaña ha jugado. */
-function onRemoteState(remote) {
-  state = reconcile(state, remote);
-  error = null;
+/**
+ * Nada más abrir el socket, y también después de cada reconexión, se presenta el
+ * token guardado: es lo que hace que recargar o perder la conexión no te eche de la
+ * partida (criterio 14).
+ */
+function presentToken() {
+  const { model: next, send } = reconnected(model, readSession(sessionStorage));
+  model = next;
+  if (send !== null) connection.send(send);
+}
 
-  // Todavía dentro de connect(): aún no sabemos qué jugador somos, no se puede pintar.
-  if (channel === null) return;
-
+function handle(message) {
+  const { model: next, session } = receive(model, message);
+  model = next;
+  applyToSession(session);
   paint();
 }
 
-/**
- * Ejecuta una acción del juego. Si las reglas la rechazan, se enseña el motivo en
- * vez de romper la página.
- */
-function apply(action) {
-  try {
-    state = action(state);
-    error = null;
-    channel.publish(state);
-  } catch (cause) {
-    error = cause.message;
+function applyToSession(session) {
+  if (session === 'keep') return;
+  if (session === 'forget') {
+    clearSession(sessionStorage);
+    return;
   }
+
+  writeSession(sessionStorage, session);
+}
+
+function send(message) {
+  model = sending(model);
+  connection.send(message);
   paint();
 }
 
 function paint() {
   const typed = captureTyping();
-  app.innerHTML = render(state, channel.playerId, error);
+  app.innerHTML = render(model);
   restoreTyping(typed);
 }
 
 /**
- * Repintamos la pantalla entera en cada cambio. En la preparación los dos jugadores
- * escriben a la vez, así que sin esto el mensaje del rival te borraría el texto a
- * medio escribir y te quitaría el foco.
+ * Repintamos la pantalla entera con cada mensaje del servidor. En la preparación los
+ * dos jugadores escriben a la vez, así que sin esto el mensaje del rival te borraría
+ * el texto a medio escribir y te quitaría el foco.
  */
 function captureTyping() {
   const active = document.activeElement;
@@ -101,26 +102,29 @@ function restoreTyping({ values, focused, cursor }) {
   if (cursor !== null) input.setSelectionRange(cursor, cursor);
 }
 
-/** Error del que no se puede volver: la partida no puede continuar. */
-function showFatal(message) {
-  app.innerHTML = `<p class="error">${message}</p>`;
-}
-
 app.addEventListener('submit', (event) => {
   event.preventDefault();
 
   const text = new FormData(event.target).get('text');
-  const me = channel.playerId;
 
   switch (event.target.id) {
+    // El nombre se escribe una sola vez y vale para crear y para entrar, así que se
+    // lee del campo y no del formulario que se acaba de enviar.
+    case 'create-form':
+      send({ type: 'create', name: valueOf('#name-input') });
+      break;
+    case 'join-form':
+      send({ type: 'join', code: valueOf('#code-input'), name: valueOf('#name-input') });
+      break;
+
     case 'secret-form':
-      apply((s) => setSecret(s, me, text));
+      send({ type: 'secret', text });
       break;
     case 'question-form':
-      apply((s) => askQuestion(s, me, text));
+      send({ type: 'ask', text });
       break;
     case 'guess-form':
-      apply((s) => guess(s, me, text));
+      send({ type: 'guess', text });
       break;
   }
 });
@@ -128,9 +132,13 @@ app.addEventListener('submit', (event) => {
 app.addEventListener('click', (event) => {
   const answer = event.target.dataset.answer;
   if (answer !== undefined) {
-    apply((s) => answerQuestion(s, channel.playerId, answer));
+    send({ type: 'answer', answer });
     return;
   }
 
-  if (event.target.id === 'restart') apply(() => reset());
+  if (event.target.id === 'rematch') send({ type: 'rematch' });
 });
+
+function valueOf(selector) {
+  return app.querySelector(selector)?.value ?? '';
+}

@@ -1,6 +1,9 @@
 /**
  * Reglas del juego. Capa pura: aquí no se toca el DOM ni el navegador.
  *
+ * Corren en el servidor, que es quien las hace cumplir desde la v2. El navegador ya
+ * no las aplica: manda la acción y pinta lo que le contesten.
+ *
  * Cada acción recibe el estado actual y devuelve uno nuevo, sin modificar el que
  * le llega. Si la acción no es válida, lanza un Error con el motivo: la interfaz
  * ya evita ofrecer acciones imposibles, así que estas comprobaciones son la red
@@ -89,82 +92,6 @@ export function guess(state, player, name) {
 
   if (isRight) return { ...state, phase: 'finished', winner: player, history };
   return { ...state, turn: opponent(player), history };
-}
-
-/** Vuelve a empezar de cero. */
-export function reset() {
-  return createGame();
-}
-
-/**
- * Combina el estado local con el que llega de la otra pestaña.
- *
- * En la preparación NO hay turnos: los dos jugadores escriben su personaje a la
- * vez, cada uno partiendo de un estado en el que el otro todavía no había escrito.
- * Quedarse con el que llega perdería una de las dos escrituras, así que ahí hay
- * que combinar. Como la combinación no depende de quién la haga, las dos pestañas
- * llegan al mismo resultado por su cuenta.
- *
- * Fuera de la preparación sí hay turnos estrictos, solo actúa un jugador cada vez
- * y el estado que llega siempre es el más reciente.
- */
-export function reconcile(local, remote) {
-  if (local.phase !== 'setup' || remote.phase !== 'setup') return remote;
-
-  const secretFor = {
-    1: local.secretFor[1] ?? remote.secretFor[1],
-    2: local.secretFor[2] ?? remote.secretFor[2],
-  };
-  const bothReady = secretFor[1] !== null && secretFor[2] !== null;
-
-  return { ...local, secretFor, phase: bothReady ? 'playing' : 'setup' };
-}
-
-/**
- * ¿Este valor tiene forma de estado de partida?
- *
- * El estado nos llega de otra pestaña a través del canal de sincronización, y ahí
- * podría llegar cualquier cosa: una versión vieja del juego, un mensaje corrupto,
- * o —al estar publicado en GitHub Pages, donde todos los proyectos comparten
- * origen— otra página que escriba en el mismo canal. Se comprueba entero, incluido
- * lo que va dentro del historial: un solo campo inesperado ahí bastaría para
- * romper el pintado y dejar la pestaña colgada.
- */
-export function isValidState(value) {
-  return (
-    isObject(value) &&
-    ['setup', 'playing', 'finished'].includes(value.phase) &&
-    isValidSecrets(value.secretFor) &&
-    [1, 2].includes(value.turn) &&
-    isValidPending(value.pendingQuestion) &&
-    Array.isArray(value.history) &&
-    value.history.every(isValidEntry) &&
-    (value.winner === null || [1, 2].includes(value.winner))
-  );
-}
-
-function isObject(value) {
-  return value !== null && typeof value === 'object';
-}
-
-function isValidSecrets(secretFor) {
-  if (!isObject(secretFor)) return false;
-  return [1, 2].every((id) => secretFor[id] === null || typeof secretFor[id] === 'string');
-}
-
-function isValidPending(pending) {
-  if (pending === null) return true;
-  return isObject(pending) && [1, 2].includes(pending.from) && typeof pending.text === 'string';
-}
-
-function isValidEntry(entry) {
-  return (
-    isObject(entry) &&
-    ['question', 'guess'].includes(entry.kind) &&
-    [1, 2].includes(entry.from) &&
-    typeof entry.text === 'string' &&
-    ANSWERS.includes(entry.answer)
-  );
 }
 
 /** Comprobaciones comunes a preguntar y arriesgar. */

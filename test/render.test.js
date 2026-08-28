@@ -1,170 +1,207 @@
-/**
- * La pantalla es una función pura de (estado, jugador) a HTML, así que se puede
- * comprobar sin navegador. Lo que más importa aquí: que no filtre el secreto y que
- * no deje pasar HTML ajeno.
- */
-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import {
-  ANSWERS,
-  createGame,
-  setSecret,
-  askQuestion,
-  answerQuestion,
-  guess,
-} from '../src/game/state.js';
-import { render, answerKey } from '../src/client/ui/render.js';
+import { answerKey, render } from '../src/client/ui/render.js';
+import { ANSWERS } from '../src/game/state.js';
+import { projectView } from '../src/game/view.js';
+import { createRoom, joinRoom, withGame } from '../src/server/rooms.js';
+import { answerQuestion, askQuestion, createGame, guess, setSecret } from '../src/game/state.js';
 
-/**
- * Partida en marcha:
- *   - el jugador 1 debe adivinar "Nico Robin"
- *   - el jugador 2 debe adivinar "Roronoa Zoro"
- */
-function partida() {
-  let state = setSecret(createGame(), 1, 'Roronoa Zoro');
-  state = setSecret(state, 2, 'Nico Robin');
-  return state;
+const NOW = 1_000_000;
+
+/** La sala tal y como la vería un jugador: exactamente lo que recibe la interfaz. */
+function viewOf(game, playerId, { connected = true } = {}) {
+  let room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW }), {
+    name: 'Nami',
+    token: 't2',
+    now: NOW,
+  });
+  if (!connected) room = { ...room, players: { ...room.players, 1: { ...room.players[1], connected: false } } };
+
+  return projectView(withGame(room, game, NOW), playerId);
+}
+
+/** El jugador 1 debe adivinar "Nico Robin"; el jugador 2, "Zoro". */
+function startedGame() {
+  return setSecret(setSecret(createGame(), 1, 'Zoro'), 2, 'Nico Robin');
+}
+
+function html(model) {
+  return render({ status: 'online', error: null, ...model });
 }
 
 // ---------------------------------------------------------------------------
-// El secreto: es todo el juego
+// Pantalla de entrada
 // ---------------------------------------------------------------------------
 
-test('la pantalla nunca enseña el personaje que tú tienes que adivinar', () => {
-  assert.ok(!render(partida(), 1, null).includes('Nico Robin'));
-  assert.ok(!render(partida(), 2, null).includes('Roronoa Zoro'));
+test('sin sala se piden el nombre y el código', () => {
+  const out = html({ view: null });
+
+  assert.match(out, /id="create-form"/);
+  assert.match(out, /id="name-input"/);
+  assert.match(out, /id="join-form"/);
+  assert.match(out, /id="code-input"/);
 });
 
-test('sí te recuerda el personaje que elegiste para tu rival', () => {
-  const state = setSecret(createGame(), 1, 'Roronoa Zoro');
-  assert.ok(render(state, 1, null).includes('Roronoa Zoro'));
-});
+test('la sala recién creada enseña el código', () => {
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const out = html({ view: projectView(alone, 1) });
 
-test('al acabar se revela quién eras', () => {
-  const final = guess(partida(), 1, 'Nico Robin');
-  assert.ok(render(final, 1, null).includes('Nico Robin'));
-});
-
-// ---------------------------------------------------------------------------
-// HTML ajeno
-// ---------------------------------------------------------------------------
-
-test('una pregunta con etiquetas se enseña como texto, no como HTML', () => {
-  const state = askQuestion(partida(), 1, '<img src=x onerror="alert(1)">');
-  const html = render(state, 2, null);
-
-  assert.ok(!html.includes('<img'));
-  assert.ok(html.includes('&lt;img'));
-});
-
-test('un nombre con comillas no se escapa del atributo', () => {
-  const state = guess(partida(), 1, '" onmouseover="alert(1)');
-  const html = render(state, 1, null);
-
-  assert.ok(!html.includes('onmouseover="alert'));
-});
-
-// El estado llega de otra pestaña; aunque la validación lo filtra, la pantalla no
-// se fía tampoco.
-test('un historial con un remitente manipulado no inyecta HTML', () => {
-  const state = {
-    ...partida(),
-    history: [{ kind: 'question', from: '1"><img src=x>', text: 'hola', answer: 'sí' }],
-  };
-
-  assert.ok(!render(state, 1, null).includes('<img'));
+  assert.match(out, /class="code">NAKAM</);
+  assert.match(out, /Esperando a que entre alguien/);
 });
 
 // ---------------------------------------------------------------------------
-// Qué se ofrece en cada momento
+// Criterio 12: los nombres, no "jugador 2"
 // ---------------------------------------------------------------------------
 
-test('a quien le toca se le ofrecen preguntar y arriesgar', () => {
-  const html = render(partida(), 1, null);
-  assert.ok(html.includes('question-form'));
-  assert.ok(html.includes('guess-form'));
+test('el rival se llama por su nombre', () => {
+  const out = html({ view: viewOf(startedGame(), 1) });
+
+  assert.match(out, /Nami/);
+  assert.ok(!out.includes('jugador 2'), 'ya no se numera a nadie');
+  assert.ok(!out.includes('Jugador 2'));
 });
 
-test('a quien no le toca no se le ofrece ninguna acción', () => {
-  const html = render(partida(), 2, null);
-  assert.ok(!html.includes('question-form'));
-  assert.ok(!html.includes('guess-form'));
+test('el turno del rival se anuncia con su nombre', () => {
+  const out = html({ view: viewOf(startedGame(), 2) });
+
+  assert.match(out, /Turno de Eric/);
 });
 
-test('a quien le preguntan se le ofrecen las tres respuestas', () => {
-  const html = render(askQuestion(partida(), 1, '¿Eres espadachín?'), 2, null);
+test('un nombre con HTML no se ejecuta', () => {
+  const room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW }), {
+    name: '<script>x</script>',
+    token: 't2',
+    now: NOW,
+  });
+  const out = html({ view: projectView(room, 1) });
 
-  assert.ok(html.includes('data-answer="sí"'));
-  assert.ok(html.includes('data-answer="no"'));
-  assert.ok(html.includes('data-answer="a veces"'));
-});
-
-test('quien preguntó no puede responderse a sí mismo', () => {
-  const html = render(askQuestion(partida(), 1, '¿Eres espadachín?'), 1, null);
-  assert.ok(!html.includes('data-answer'));
-});
-
-test('una tercera pestaña recibe un aviso en vez del juego', () => {
-  const html = render(partida(), null, null);
-
-  assert.ok(html.includes('Ya hay dos jugadores'));
-  assert.ok(!html.includes('question-form'));
-});
-
-test('el motivo del rechazo se enseña cuando lo hay', () => {
-  assert.ok(render(partida(), 1, 'No es tu turno').includes('No es tu turno'));
+  assert.ok(!out.includes('<script>x</script>'));
+  assert.match(out, /&lt;script&gt;/);
 });
 
 // ---------------------------------------------------------------------------
-// Historial
+// Preparación y tablero
 // ---------------------------------------------------------------------------
 
-test('el historial distingue lo tuyo de lo del rival', () => {
-  let state = askQuestion(partida(), 1, '¿Eres espadachín?');
-  state = answerQuestion(state, 2, 'a veces');
+test('en la preparación se pide el personaje del rival', () => {
+  const out = html({ view: viewOf(createGame(), 1) });
 
-  assert.ok(render(state, 1, null).includes('Tú'));
-  assert.ok(render(state, 2, null).includes('Jugador 1'));
+  assert.match(out, /id="secret-form"/);
+  assert.match(out, /Elige el personaje de Nami/);
 });
 
-test('un intento fallido se lee distinto según quién lo hizo', () => {
-  const state = guess(partida(), 1, 'Sanji');
+test('elegido el personaje, se espera al rival', () => {
+  const out = html({ view: viewOf(setSecret(createGame(), 1, 'Zoro'), 1) });
 
-  assert.ok(render(state, 1, null).includes('te arriesgaste'));
-  assert.ok(render(state, 2, null).includes('se arriesgó'));
+  assert.match(out, /Zoro/);
+  assert.match(out, /Esperando a que Nami elija/);
+  assert.ok(!out.includes('id="secret-form"'), 'ya no se puede elegir dos veces');
 });
 
-test('cada respuesta lleva su marca para poder distinguirla en pantalla', () => {
-  let state = askQuestion(partida(), 1, '¿Eres espadachín?');
-  state = answerQuestion(state, 2, 'a veces');
+test('en tu turno puedes preguntar o arriesgar', () => {
+  const out = html({ view: viewOf(startedGame(), 1) });
 
-  assert.ok(render(state, 1, null).includes('data-value="sometimes"'));
+  assert.match(out, /id="question-form"/);
+  assert.match(out, /id="guess-form"/);
 });
 
-// El color de cada respuesta vive en el CSS y la clave en el JavaScript: dos sitios
-// que solo coinciden por disciplina. Este test los ata, para que añadir una
-// respuesta al juego y olvidarse del color deje de ser posible.
-test('las tres respuestas tienen clave propia y color en el CSS', () => {
+test('fuera de tu turno no hay con qué actuar', () => {
+  const out = html({ view: viewOf(startedGame(), 2) });
+
+  assert.ok(!out.includes('id="question-form"'));
+  assert.ok(!out.includes('id="guess-form"'));
+});
+
+test('a quien le preguntan le salen las tres respuestas', () => {
+  const asked = askQuestion(startedGame(), 1, '¿Eres espadachín?');
+  const out = html({ view: viewOf(asked, 2) });
+
+  for (const answer of ANSWERS) assert.match(out, new RegExp(`data-answer="${answer}"`));
+  assert.match(out, /Eric pregunta/);
+});
+
+test('quien pregunta espera, sin botones de respuesta', () => {
+  const asked = askQuestion(startedGame(), 1, '¿Eres espadachín?');
+  const out = html({ view: viewOf(asked, 1) });
+
+  assert.ok(!out.includes('data-answer'));
+  assert.match(out, /Esperando a que Nami responda/);
+});
+
+test('el historial dice quién preguntó y qué se respondió', () => {
+  let game = askQuestion(startedGame(), 1, '¿Eres espadachín?');
+  game = answerQuestion(game, 2, 'a veces');
+  const out = html({ view: viewOf(game, 2) });
+
+  assert.match(out, /¿Eres espadachín\?/);
+  assert.match(out, /data-value="sometimes"/);
+  assert.match(out, /Eric/);
+});
+
+// ---------------------------------------------------------------------------
+// Final y revancha
+// ---------------------------------------------------------------------------
+
+test('el final revela los dos personajes y ofrece revancha', () => {
+  const finished = guess(startedGame(), 1, 'Nico Robin');
+  const out = html({ view: viewOf(finished, 1) });
+
+  assert.match(out, /¡Has ganado!/);
+  assert.match(out, /Eras <strong>Nico Robin<\/strong>/);
+  assert.match(out, /Nami era <strong>Zoro<\/strong>/);
+  assert.match(out, /id="rematch"/);
+});
+
+test('quien pierde lo lee con el nombre del que ganó', () => {
+  const finished = guess(startedGame(), 1, 'Nico Robin');
+  const out = html({ view: viewOf(finished, 2) });
+
+  assert.match(out, /Ha ganado Eric/);
+});
+
+// ---------------------------------------------------------------------------
+// Criterio 13: conexión
+// ---------------------------------------------------------------------------
+
+test('la caída del rival se avisa con su nombre', () => {
+  const out = html({ view: viewOf(startedGame(), 2, { connected: false }) });
+
+  assert.match(out, /Eric se ha desconectado/);
+});
+
+test('estar sin conexión se ve, y estar conectado no molesta', () => {
+  assert.match(html({ view: null, status: 'offline' }), /Sin conexión/);
+  assert.match(html({ view: null, status: 'connecting' }), /Conectando/);
+  assert.ok(!html({ view: null }).includes('class="notice"'));
+});
+
+test('el error del servidor se enseña tal cual', () => {
+  const out = html({ view: null, error: 'No existe ninguna sala con ese código' });
+
+  assert.match(out, /class="error">No existe ninguna sala con ese código</);
+});
+
+// ---------------------------------------------------------------------------
+// El acuerdo con el CSS
+// ---------------------------------------------------------------------------
+
+test('cada respuesta del juego tiene su color en el CSS', () => {
   const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
-  const claves = new Set();
 
   for (const answer of ANSWERS) {
-    const clave = answerKey(answer);
-
-    assert.notEqual(clave, 'unknown', `«${answer}» no tiene clave asignada`);
-    assert.ok(!claves.has(clave), `«${answer}» repite la clave «${clave}»`);
-    claves.add(clave);
-
-    assert.ok(
-      css.includes(`[data-value='${clave}']`) || css.includes(`[data-value="${clave}"]`),
-      `falta el color de «${clave}» en styles/main.css`,
-    );
+    const key = answerKey(answer);
+    assert.notEqual(key, 'unknown', `"${answer}" no tiene clave de color`);
+    assert.match(css, new RegExp(`\\[data-value='${key}'\\]`), `el CSS no pinta "${key}"`);
   }
 });
 
-test('una respuesta que no existe en el juego no finge tener color', () => {
-  assert.equal(answerKey('quizá'), 'unknown');
+test('las clases nuevas de la v2 existen en el CSS', () => {
+  const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
+
+  for (const clase of ['.code', '.score', '.notice']) {
+    assert.match(css, new RegExp(`\\${clase}[\\s,{]`), `falta ${clase} en el CSS`);
+  }
 });

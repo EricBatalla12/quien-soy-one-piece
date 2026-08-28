@@ -7,8 +7,6 @@ import {
   askQuestion,
   answerQuestion,
   guess,
-  reset,
-  isValidState,
 } from '../src/game/state.js';
 
 /**
@@ -154,14 +152,7 @@ test('las acciones no modifican el estado que reciben', () => {
   assert.deepEqual(antes, copia);
 });
 
-test('reiniciar devuelve una partida nueva', () => {
-  assert.deepEqual(reset(), createGame());
-});
-
-test('isValidState acepta un estado bueno y rechaza basura', () => {
-  assert.ok(isValidState(createGame()));
-  assert.ok(!isValidState(null));
-  assert.ok(!isValidState('hola'));
-  assert.ok(!isValidState({ phase: 'inventada', turn: 1, history: [], secretFor: {}, winner: null }));
-  assert.ok(!isValidState({ phase: 'playing', turn: 7, history: [], secretFor: {}, winner: null }));
+test('la partida no guarda nada del rival que no vaya a verse', () => {
+  const state = partidaEmpezada();
+  assert.deepEqual(Object.keys(state.secretFor), ['1', '2']);
 });

@@ -13,8 +13,11 @@
 /** Ficheros sueltos que se sirven tal cual. */
 const PUBLIC_FILES = ['index.html'];
 
-/** Carpetas públicas enteras: la interfaz y las reglas, que corren en el navegador. */
-const PUBLIC_DIRS = ['styles/', 'src/client/', 'src/game/'];
+/**
+ * Carpetas públicas enteras. Solo la interfaz: desde la v2 las reglas corren en el
+ * servidor, así que el navegador no necesita `src/game` y no se sirve.
+ */
+const PUBLIC_DIRS = ['styles/', 'src/client/'];
 
 const CONTENT_TYPES = new Map([
   ['html', 'text/html; charset=utf-8'],
