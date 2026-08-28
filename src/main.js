@@ -22,7 +22,8 @@ let error = null;
 let channel = null;
 
 try {
-  channel = await connect({ onRemoteState });
+  // getState: el canal no guarda la partida, se la pide a quien la tiene.
+  channel = await connect({ onRemoteState, getState: () => state });
 } catch (cause) {
   showFatal(
     'No se ha podido abrir el canal entre pestañas. Si has abierto el fichero ' +
@@ -43,7 +44,6 @@ function onRemoteState(remote) {
   // Todavía dentro de connect(): aún no sabemos qué jugador somos, no se puede pintar.
   if (channel === null) return;
 
-  channel.remember(state);
   paint();
 }
 

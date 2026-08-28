@@ -8,6 +8,20 @@
  * OJO: esto no funciona abriendo el HTML con file://. Los navegadores dan un origen
  * opaco a los ficheros locales y BroadcastChannel deja de conectar las pestañas.
  * Hay que servir por HTTP (`npm run dev`).
+ *
+ * ## El protocolo
+ *
+ * Solo hay tres mensajes, y ninguna pestaña manda sobre las demás:
+ *
+ * | Mensaje  | Quién lo manda        | Contenido            | Qué provoca                       |
+ * |----------|-----------------------|----------------------|-----------------------------------|
+ * | `whois`  | Quien acaba de entrar | nada                 | Que las demás se presenten        |
+ * | `iam`    | Quien ya estaba       | su número y la partida | Reparte números y pasa la partida |
+ * | `state`  | Quien acaba de jugar  | la partida entera    | Las demás la adoptan              |
+ *
+ * `whois`/`iam` solo se usan al arrancar; a partir de ahí todo son `state`.
+ * La partida no la guarda esta capa: se pide con `getState()` a quien la tiene, para
+ * que no existan dos copias que haya que mantener a mano en sintonía.
  */
 
 import { isValidState } from '../game/state.js';
@@ -21,7 +35,15 @@ import { isValidState } from '../game/state.js';
 const CHANNEL_NAME = 'quien-soy-one-piece/v1';
 const IDENTITY_KEY = 'playerId';
 
-/** Cuánto esperamos a que las otras pestañas digan quiénes son. */
+/**
+ * Cuánto se espera a que las otras pestañas contesten al `whois`.
+ *
+ * Es el único número arbitrario del fichero y tiene dos lados: cuanto más corto,
+ * antes empieza a jugarse, pero más probable es que dos pestañas abiertas casi a la
+ * vez no lleguen a verse y las dos se crean el jugador 1 (limitación asumida en la
+ * sección 7 de la espec). Los mensajes entre pestañas del mismo navegador tardan
+ * menos de un milisegundo, así que 200 va sobradísimo para el caso real.
+ */
 const PRESENCE_WINDOW_MS = 200;
 
 /**
@@ -32,13 +54,16 @@ const PRESENCE_WINDOW_MS = 200;
  * cogemos un número libre, y una pestaña recargada recupera la partida en lugar de
  * quedarse en blanco.
  *
+ * `getState()` devuelve la partida tal y como la ve quien nos llama; se le pregunta
+ * cada vez que hay que enseñársela a alguien, en lugar de guardar aquí una segunda
+ * copia que se iría desincronizando.
+ *
  * Devuelve `playerId: null` si ya hay dos jugadores: esta pestaña sobra.
  */
-export async function connect({ onRemoteState }) {
+export async function connect({ onRemoteState, getState }) {
   const channel = new BroadcastChannel(CHANNEL_NAME);
 
   let playerId = null;
-  let currentState = null;
   const presence = [];
 
   channel.addEventListener('message', (event) => {
@@ -48,7 +73,7 @@ export async function connect({ onRemoteState }) {
     switch (message.type) {
       case 'whois':
         // Alguien acaba de entrar: le decimos quiénes somos y cómo va la partida.
-        channel.postMessage({ type: 'iam', playerId, state: currentState });
+        channel.postMessage({ type: 'iam', playerId, state: getState() });
         break;
 
       case 'iam':
@@ -58,7 +83,6 @@ export async function connect({ onRemoteState }) {
       case 'state':
         // Llega de otra pestaña, así que no nos fiamos de su forma.
         if (!isValidState(message.state)) return;
-        currentState = message.state;
         onRemoteState(message.state);
         break;
     }
@@ -71,26 +95,15 @@ export async function connect({ onRemoteState }) {
   playerId = choosePlayerId(taken, Number(sessionStorage.getItem(IDENTITY_KEY)));
   if (playerId !== null) sessionStorage.setItem(IDENTITY_KEY, String(playerId));
 
-  // Si alguna pestaña nos ha pasado una partida en curso, la adoptamos.
-  currentState = presence.map((m) => m.state).find(isValidState) ?? null;
-
   return {
     playerId,
-    initialState: currentState,
+
+    /** La partida que nos haya pasado alguna pestaña, si es que había alguna. */
+    initialState: presence.map((m) => m.state).find(isValidState) ?? null,
 
     /** Difunde el estado a la otra pestaña. */
     publish(state) {
-      currentState = state;
       channel.postMessage({ type: 'state', state });
-    },
-
-    /**
-     * Actualiza el estado que enseñaremos a quien entre después, sin difundirlo.
-     * Hace falta cuando quien llama combina el estado recibido con el suyo: el
-     * resultado es el bueno, pero la otra pestaña ya ha hecho esa misma cuenta.
-     */
-    remember(state) {
-      currentState = state;
     },
 
     close() {
