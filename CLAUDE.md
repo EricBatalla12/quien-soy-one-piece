@@ -1,8 +1,11 @@
 # ¿Quién soy? One Piece
 
-Juego web de "¿Quién soy?" para dos jugadores en dos pestañas del mismo navegador.
+Juego web de "¿Quién soy?" para dos jugadores desde ordenadores distintos, con un
+servidor Node por medio.
 
-**La especificación manda: `docs/ESPEC.md`.** Léela antes de proponer o escribir nada.
+**La especificación manda: `docs/ESPEC-V2.md`.** Léela antes de proponer o escribir
+nada. `docs/ESPEC.md` es la v1, ya sustituida: se conserva como registro, no como
+guía de lo que hay que hacer.
 
 ## Reglas de trabajo
 
@@ -10,10 +13,14 @@ Juego web de "¿Quién soy?" para dos jugadores en dos pestañas del mismo naveg
   que algo de esa lista hace falta, dilo y espera; no lo añadas por tu cuenta.
 - Antes de dar una funcionalidad por terminada, comprueba contra los criterios de
   aceptación (sección 8 de la espec) y di cuáles cumple.
+- El servidor es quien manda: las reglas se aplican en `src/server`, y el navegador
+  solo manda acciones y pinta la vista que recibe. Nada que un jugador no deba ver
+  puede salir de `projectView`.
 - Trabajamos por piezas pequeñas, con un commit por pieza. No encadenes varias
   funcionalidades en una sola tanda de cambios.
 - Toda capa necesita tests. Si algo parece no testeable porque depende del navegador,
-  extrae la parte pura y testea esa (como `reconcile` o `choosePlayerId`). "Lo he
+  extrae la parte pura y testea esa (como `projectView`, `hasExpired` o el propio
+  `app.js` del cliente). "Lo he
   probado a mano" no cuenta como verificado: los doce fallos de la auditoría estaban
   justo en los dos ficheros que no tenían tests.
 - Los renombrados van en su propio commit, sin cambios de comportamiento.
@@ -26,9 +33,11 @@ Juego web de "¿Quién soy?" para dos jugadores en dos pestañas del mismo naveg
 ## Comandos
 
 - `npm test` — ejecuta los tests (`node --test`).
-- `npm run dev` — sirve el juego en http://localhost:8000 con `python3 -m http.server`.
+- `npm start` — sirve el juego y coordina las partidas en http://localhost:8000.
+  `npm run dev` hace lo mismo.
 
-El v1 no tiene ninguna dependencia y así se queda. El v2 con servidor necesitará al menos una (ws o equivalente): añade solo las imprescindibles y pregunta antes de cada una.
+La única dependencia es `ws`, ya aprobada. Añade solo las imprescindibles y pregunta
+antes de cada una.
 
-Abrir el `index.html` directamente con `file://` **no funciona**: el origen opaco
-rompe `BroadcastChannel`. Hay que servirlo por HTTP.
+Abrir el `index.html` directamente con `file://` **no funciona**: el juego lo sirve
+el propio servidor, que es también con quien habla por WebSocket.
