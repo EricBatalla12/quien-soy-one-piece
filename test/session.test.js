@@ -1,7 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { clearSession, readSession, writeSession } from '../src/client/session.js';
+import {
+  clearClues,
+  clearSession,
+  readClues,
+  readSession,
+  writeClues,
+  writeSession,
+} from '../src/client/session.js';
 
 /** Un `sessionStorage` de mentira, que es todo lo que la capa necesita. */
 function fakeStorage(initial = {}) {
@@ -57,4 +64,52 @@ test('un almacén que lanza no rompe el juego', () => {
   assert.equal(readSession(storage), null);
   assert.doesNotThrow(() => writeSession(storage, { code: 'NAKAM', token: 'abc' }));
   assert.doesNotThrow(() => clearSession(storage));
+});
+
+// ---------------------------------------------------------------------------
+// El tablero de pistas
+// ---------------------------------------------------------------------------
+
+test('el tablero se recupera al recargar', () => {
+  const storage = fakeStorage();
+  writeClues(storage, 'NAKAM', [3, 0, 7]);
+
+  assert.deepEqual(readClues(storage, 'NAKAM'), [3, 0, 7]);
+});
+
+test('sin tablero guardado se empieza vacío', () => {
+  assert.deepEqual(readClues(fakeStorage(), 'NAKAM'), []);
+});
+
+test('cada sala tiene el suyo', () => {
+  const storage = fakeStorage();
+  writeClues(storage, 'NAKAM', [1]);
+  writeClues(storage, 'ZORRO', [2, 3]);
+
+  assert.deepEqual(readClues(storage, 'NAKAM'), [1]);
+  assert.deepEqual(readClues(storage, 'ZORRO'), [2, 3]);
+});
+
+test('un tablero corrupto no rompe la partida', () => {
+  for (const raw of ['no soy json', '{}', 'null', '[1, "dos"]', '[-1]', '[1.5]', '["3"]']) {
+    const storage = fakeStorage({ 'quien-soy/clues/NAKAM': raw });
+    assert.deepEqual(readClues(storage, 'NAKAM'), [], raw);
+  }
+});
+
+test('salir de la sala borra su tablero', () => {
+  const storage = fakeStorage();
+  writeClues(storage, 'NAKAM', [1]);
+  clearClues(storage, 'NAKAM');
+
+  assert.deepEqual(readClues(storage, 'NAKAM'), []);
+  assert.equal(storage.size, 0);
+});
+
+test('un almacén que lanza tampoco rompe el tablero', () => {
+  const storage = brokenStorage();
+
+  assert.deepEqual(readClues(storage, 'NAKAM'), []);
+  assert.doesNotThrow(() => writeClues(storage, 'NAKAM', [1]));
+  assert.doesNotThrow(() => clearClues(storage, 'NAKAM'));
 });

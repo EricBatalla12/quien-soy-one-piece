@@ -13,7 +13,14 @@ import { isPinned, moveClue, noClues, pinClue, unpinClue } from './clues.js';
 import { trackDragging } from './ui/drag.js';
 import { connect, socketUrl } from './sync/connection.js';
 import { nextScrollTop } from './ui/scroll.js';
-import { clearSession, readSession, writeSession } from './session.js';
+import {
+  clearClues,
+  clearSession,
+  readClues,
+  readSession,
+  writeClues,
+  writeSession,
+} from './session.js';
 import { render } from './ui/render.js';
 
 const app = document.getElementById('app');
@@ -25,6 +32,9 @@ let model = initialModel();
  * va hacia él: es una libreta tuya, en esta pestaña.
  */
 let clues = noClues();
+
+/** De qué sala son las pistas que tenemos cargadas. */
+let room = null;
 
 /**
  * Mientras arrastras no se repinta.
@@ -63,6 +73,27 @@ function handle(message) {
   const { model: next, session } = receive(model, message);
   model = next;
   applyToSession(session);
+  loadClues();
+  paint();
+}
+
+/**
+ * Al entrar en una sala se recuperan sus pistas, y al salir se sueltan. Se guardan
+ * por sala porque son posiciones del historial de una partida concreta: en otra sala
+ * no significarían nada.
+ */
+function loadClues() {
+  const code = model.view === null ? null : model.view.code;
+  if (code === room) return;
+
+  room = code;
+  clues = code === null ? noClues() : readClues(sessionStorage, code);
+}
+
+/** Cambia el tablero y lo guarda, para que recargar no se lo lleve por delante. */
+function rememberClues(next) {
+  clues = next;
+  if (room !== null) writeClues(sessionStorage, room, clues);
   paint();
 }
 
@@ -70,6 +101,7 @@ function applyToSession(session) {
   if (session === 'keep') return;
   if (session === 'forget') {
     clearSession(sessionStorage);
+    if (room !== null) clearClues(sessionStorage, room);
     return;
   }
 
@@ -197,15 +229,13 @@ app.addEventListener('click', (event) => {
   // El mismo botón guarda y quita: en el historial es un "+" y en el tablero una "×".
   if (pin !== undefined) {
     const index = Number(pin);
-    clues = isPinned(clues, index) ? unpinClue(clues, index) : pinClue(clues, index);
-    paint();
+    rememberClues(isPinned(clues, index) ? unpinClue(clues, index) : pinClue(clues, index));
     return;
   }
 
   if (move !== undefined) {
     const [index, step] = move.split(':').map(Number);
-    clues = moveClue(clues, index, clues.indexOf(index) + step);
-    paint();
+    rememberClues(moveClue(clues, index, clues.indexOf(index) + step));
   }
 });
 
@@ -214,8 +244,7 @@ trackDragging({
   boardId: 'clue-board',
   onDrop({ from, index, to }) {
     // Arrastrada desde el historial, primero hay que guardarla; desde el tablero, ya está.
-    clues = moveClue(from === 'history' ? pinClue(clues, index) : clues, index, to);
-    paint();
+    rememberClues(moveClue(from === 'history' ? pinClue(clues, index) : clues, index, to));
   },
   onDraggingChange(active) {
     dragging = active;

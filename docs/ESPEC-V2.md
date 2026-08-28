@@ -120,7 +120,7 @@ Todo en memoria, indexado por código de sala:
 |---|---|---|
 | Token de sala | `sessionStorage`, por código de sala | Recuperar tu sitio al recargar. Es por pestaña, así que dos pestañas del mismo navegador son dos jugadores distintos, igual que en la v1 |
 | Vista de la partida | Memoria | Lo último que envió el servidor; se pinta y ya |
-| Tablero de pistas | Memoria | Qué preguntas has guardado y en qué orden. **No sale del navegador**: no es parte de la partida, el rival no lo ve y no cambia ninguna regla. Guarda posiciones del historial, así que con la revancha se vacía solo |
+| Tablero de pistas | `sessionStorage`, por código de sala | Qué preguntas has guardado y en qué orden. **No sale del navegador**: no es parte de la partida, el rival no lo ve y no cambia ninguna regla. Guarda posiciones del historial, así que con la revancha se vacía solo. Se guarda por sala para que recargar no se lo lleve |
 
 ### 5.3 La vista: qué recibe cada jugador
 
@@ -259,6 +259,8 @@ La v2 está terminada cuando todo esto se cumple:
 19. Una pregunta respondida se puede guardar en el tablero de pistas y ordenarla
     allí, arrastrándola o con sus botones. El tablero es tuyo: no viaja al servidor
     y el rival no lo ve.
+20. Recargar la pestaña no se lleva el tablero por delante, igual que no se lleva la
+    partida.
 
 ## 9. Plan de trabajo
 

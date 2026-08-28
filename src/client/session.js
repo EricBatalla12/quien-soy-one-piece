@@ -16,6 +16,12 @@
 
 const KEY = 'quien-soy/session';
 
+/**
+ * Las pistas se guardan por sala, no todas juntas: son posiciones del historial de
+ * una partida concreta y en otra sala no significarían nada.
+ */
+const CLUES_KEY = 'quien-soy/clues';
+
 export function readSession(storage) {
   try {
     const session = JSON.parse(storage.getItem(KEY));
@@ -42,4 +48,42 @@ export function clearSession(storage) {
   } catch {
     // Igual que arriba: no poder olvidar el token no debe romper nada.
   }
+}
+
+/**
+ * El tablero de pistas de una sala.
+ *
+ * Recargar no debe perderlo, igual que no pierde la partida. Se comprueba lo que
+ * hay guardado porque `sessionStorage` es texto que puede tocar cualquiera: una
+ * posición que no sea un número entero rompería el pintado del tablero.
+ */
+export function readClues(storage, code) {
+  try {
+    const clues = JSON.parse(storage.getItem(`${CLUES_KEY}/${code}`));
+    if (!Array.isArray(clues) || !clues.every(isPosition)) return [];
+
+    return clues;
+  } catch {
+    return [];
+  }
+}
+
+export function writeClues(storage, code, clues) {
+  try {
+    storage.setItem(`${CLUES_KEY}/${code}`, JSON.stringify(clues));
+  } catch {
+    // Sin almacén se juega igual; solo se pierde el tablero al recargar.
+  }
+}
+
+export function clearClues(storage, code) {
+  try {
+    storage.removeItem(`${CLUES_KEY}/${code}`);
+  } catch {
+    // Igual que arriba.
+  }
+}
+
+function isPosition(value) {
+  return Number.isInteger(value) && value >= 0;
 }
