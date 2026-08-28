@@ -669,7 +669,14 @@ blockquote {
 
 .entry {
   cursor: grab;
-  touch-action: none;
+  /*
+   * Con el dedo, el gesto de arriba abajo desplaza el historial; solo el de lado
+   * empieza a arrastrar. Si esto fuera `none`, como en las pistas del tablero,
+   * tocar encima de una pregunta bloquearía el desplazamiento y el historial se
+   * volvería intocable en un móvil. Para llevar una pregunta al tablero desde una
+   * pantalla táctil está su botón, que es más cómodo que cruzar media pantalla.
+   */
+  touch-action: pan-y;
 }
 
 .entry .answer {
