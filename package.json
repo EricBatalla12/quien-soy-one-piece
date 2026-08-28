@@ -9,6 +9,9 @@
     "start": "node src/server/start.js",
     "dev": "node src/server/start.js"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "ws": "^8.21.3"
   }

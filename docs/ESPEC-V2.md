@@ -202,9 +202,11 @@ sincronización a cambio de unos bytes de más.
 - **Las partidas viven en memoria.** Si el servidor se reinicia o el PaaS lo duerme,
   las salas abiertas se pierden. Se asume: una base de datos para un juego de dos
   personas que dura diez minutos no compensa.
-- **Los PaaS gratuitos duermen.** La primera conexión tras un rato de inactividad
-  puede tardar unos segundos en despertar el servidor. La interfaz debe decir que
-  está conectando en lugar de parecer rota.
+- **Los PaaS gratuitos duermen.** En el plan gratuito de Render el servicio se apaga
+  tras 15 minutos sin recibir nada y tarda cerca de un minuto en volver, así que la
+  primera visita tras un rato puede hacerse larga. La interfaz debe decir que está
+  conectando en lugar de parecer rota. Los mensajes de un WebSocket abierto cuentan
+  como actividad: una partida en curso no se duerme.
 - **El token está en `sessionStorage`.** Recargar funciona; cerrar la pestaña y
   volver a abrirla, no: se pierde el token y con él la plaza, que quedará ocupada
   hasta que la sala expire. Es el mismo compromiso que la v1 hacía con `playerId`, y

@@ -38,6 +38,21 @@ npm test      # todo, sin navegador y sin red de verdad
 Para probarlo solo, abre dos pestañas: `sessionStorage` es propio de cada una, así que
 cuentan como dos jugadores distintos.
 
+## Despliegue
+
+El repositorio trae un [`render.yaml`](render.yaml), así que en Render basta con
+**New → Blueprint**, elegir este repositorio y confirmar: el plan gratuito, el
+comando de arranque y la versión de Node ya vienen puestos. Cada `git push` a `main`
+vuelve a desplegar.
+
+En el plan gratuito el servicio se duerme tras 15 minutos sin recibir nada y tarda
+cerca de un minuto en despertar, así que la primera visita después de un rato se hace
+larga. Una partida en curso lo mantiene despierto, y cuando se duerme las salas ya
+habían caducado de todos modos.
+
+**Este juego no funciona en GitHub Pages**, que solo sirve ficheros y no puede
+ejecutar el servidor que reparte las partidas.
+
 ## Cómo está hecho
 
 El servidor manda. El navegador no aplica reglas: manda acciones y pinta lo que le
