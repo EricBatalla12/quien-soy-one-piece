@@ -20,4 +20,11 @@ Juego web de "¿Quién soy?" para dos jugadores en dos pestañas del mismo naveg
 
 ## Comandos
 
-Pendiente: aún no hay stack elegido (se decide en la fase de arquitectura).
+- `npm test` — ejecuta los tests de la lógica pura (`node --test`, sin dependencias).
+- `npm run dev` — sirve el juego en http://localhost:8000 con `python3 -m http.server`.
+
+El proyecto **no tiene ninguna dependencia** y no queremos que las tenga. Módulos ES
+nativos, sin empaquetador. Si crees que hace falta instalar algo, pregunta antes.
+
+Abrir el `index.html` directamente con `file://` **no funciona**: el origen opaco
+rompe `BroadcastChannel`. Hay que servirlo por HTTP.

@@ -1,0 +1,11 @@
+{
+  "name": "quien-soy-one-piece",
+  "version": "1.0.0",
+  "description": "Juego web de ¿Quién soy? para dos jugadores con temática de One Piece",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "dev": "python3 -m http.server 8000"
+  }
+}
