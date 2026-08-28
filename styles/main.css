@@ -282,40 +282,68 @@ blockquote {
   color: var(--ink-soft);
 }
 
-/* --- Historial ---------------------------------------------------------- */
+/* --- Historial: una columna por jugador --------------------------------- */
 
+.log {
+  margin-top: 1.4rem;
+}
+
+/* Los encabezados dicen de quién es cada columna. Sin ellos, mientras solo haya
+   hablado uno, no habría forma de saber cuál de las dos es la suya. */
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px dashed rgba(109, 86, 55, 0.35);
+
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.columns span:last-child {
+  text-align: right;
+}
+
+/* Una fila por entrada, y no una rejilla de dos columnas: con la rejilla, dos
+   mensajes seguidos de jugadores distintos caían en la misma fila y dejaban de
+   verse cuál fue antes. Así la conversación se lee siempre de arriba abajo. */
 .history {
-  margin: 1.2rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0.7rem 0 0;
   padding: 0;
   list-style: none;
 }
 
-.history li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px dashed rgba(109, 86, 55, 0.3);
+.entry {
+  align-self: flex-end; /* el rival, en la columna derecha */
+  max-width: 48%;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(109, 86, 55, 0.28);
+  border-radius: 10px 10px 3px 10px;
 }
 
-.who {
-  flex: 0 0 auto;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-soft);
+.entry.mine {
+  align-self: flex-start; /* tú, en la izquierda */
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 10px 10px 10px 3px;
 }
 
 .said {
-  flex: 1 1 12rem;
-  overflow-wrap: anywhere; /* que un nombre larguísimo no desborde */
+  display: block;
+  overflow-wrap: anywhere; /* que un nombre larguísimo no desborde su columna */
 }
 
 .answer {
-  flex: 0 0 auto;
-  padding: 0.15rem 0.7rem;
-  font-size: 0.85rem;
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #fff;
   border-radius: 999px;
@@ -329,6 +357,28 @@ blockquote {
 }
 .answer[data-value='sometimes'] {
   background: #9a7415;
+}
+
+/* Solo para lectores de pantalla: quien ve la página ya tiene las columnas. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* En un móvil, media pantalla por columna deja las preguntas en un hilo de
+   palabras sueltas. Se ensanchan: de quién es cada una sigue diciéndolo el lado. */
+@media (max-width: 30rem) {
+  .entry {
+    max-width: 82%;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.95rem;
+  }
 }
 
 /* --- Final -------------------------------------------------------------- */

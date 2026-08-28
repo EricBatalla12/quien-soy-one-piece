@@ -142,6 +142,38 @@ test('el historial dice quién preguntó y qué se respondió', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Una columna por jugador
+// ---------------------------------------------------------------------------
+
+test('cada entrada del historial va a la columna de quien habló', () => {
+  let game = askQuestion(startedGame(), 1, '¿Eres espadachín?');
+  game = answerQuestion(game, 2, 'no');
+  game = askQuestion(game, 2, '¿Llevas sombrero?');
+  game = answerQuestion(game, 1, 'sí');
+
+  const mine = html({ view: viewOf(game, 1) });
+  const theirs = html({ view: viewOf(game, 2) });
+
+  // La misma partida, vista desde los dos lados: lo tuyo cambia de columna.
+  assert.match(mine, /class="entry mine">\s*<span class="who sr-only">Tú<\/span>\s*<span class="said">¿Eres espadachín\?/);
+  assert.match(theirs, /class="entry rival">\s*<span class="who sr-only">Eric<\/span>\s*<span class="said">¿Eres espadachín\?/);
+});
+
+test('las columnas van encabezadas por los dos nombres', () => {
+  const game = answerQuestion(askQuestion(startedGame(), 1, '¿Eres pirata?'), 2, 'sí');
+  const out = html({ view: viewOf(game, 2) });
+
+  assert.match(out, /class="columns">\s*<span>Tú<\/span>\s*<span>Eric<\/span>/);
+});
+
+test('quien no ve la página se entera igual de quién habló', () => {
+  const game = answerQuestion(askQuestion(startedGame(), 1, '¿Eres pirata?'), 2, 'sí');
+  const out = html({ view: viewOf(game, 2) });
+
+  assert.match(out, /<span class="who sr-only">Eric<\/span>/);
+});
+
+// ---------------------------------------------------------------------------
 // Final y revancha
 // ---------------------------------------------------------------------------
 
@@ -201,7 +233,7 @@ test('cada respuesta del juego tiene su color en el CSS', () => {
 test('las clases nuevas de la v2 existen en el CSS', () => {
   const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
 
-  for (const selector of ['.code', '.score', '.notice']) {
+  for (const selector of ['.code', '.score', '.notice', '.log', '.columns', '.entry', '.sr-only']) {
     assert.match(css, new RegExp(`\\${selector}[\\s,{]`), `falta ${selector} en el CSS`);
   }
 });

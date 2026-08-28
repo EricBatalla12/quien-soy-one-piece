@@ -252,11 +252,26 @@ function historyList(view) {
           ? `${isMine ? 'te arriesgaste' : 'se arriesgó'} con «${escapeHtml(entry.text)}»`
           : `${escapeHtml(entry.text)}`;
       const key = escapeHtml(answerKey(entry.answer));
-      return `<li><span class="who">${who}</span> <span class="said">${said}</span> <span class="answer" data-value="${key}">${escapeHtml(entry.answer)}</span></li>`;
+
+      // El nombre se repite en cada entrada aunque la columna ya lo diga: quien
+      // navegue con lector de pantalla no ve columnas, solo oye la lista.
+      return `<li class="entry ${isMine ? 'mine' : 'rival'}">
+        <span class="who sr-only">${who}</span>
+        <span class="said">${said}</span>
+        <span class="answer" data-value="${key}">${escapeHtml(entry.answer)}</span>
+      </li>`;
     })
     .join('');
 
-  return `<ol class="history">${rows}</ol>`;
+  return `
+    <div class="log">
+      <div class="columns">
+        <span>Tú</span>
+        <span>${escapeHtml(view.rival.name)}</span>
+      </div>
+      <ol class="history">${rows}</ol>
+    </div>
+  `;
 }
 
 /**
