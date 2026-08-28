@@ -201,7 +201,7 @@ test('cada respuesta del juego tiene su color en el CSS', () => {
 test('las clases nuevas de la v2 existen en el CSS', () => {
   const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
 
-  for (const clase of ['.code', '.score', '.notice']) {
-    assert.match(css, new RegExp(`\\${clase}[\\s,{]`), `falta ${clase} en el CSS`);
+  for (const selector of ['.code', '.score', '.notice']) {
+    assert.match(css, new RegExp(`\\${selector}[\\s,{]`), `falta ${selector} en el CSS`);
   }
 });
