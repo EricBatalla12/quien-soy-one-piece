@@ -1,0 +1,318 @@
+/**
+ * Estética One Piece: mar abierto de fondo y un pergamino encima.
+ * Todo con formas y degradados propios, sin imágenes ni fuentes externas.
+ */
+
+:root {
+  --mar-hondo: #06223a;
+  --mar: #0d3c5c;
+  --mar-claro: #17618b;
+  --espuma: rgba(255, 255, 255, 0.07);
+
+  --pergamino: #f6e7c4;
+  --pergamino-hondo: #e6d0a3;
+  --tinta: #3b2a16;
+  --tinta-suave: #6d5637;
+
+  --oro: #d99f28;
+  --oro-claro: #f7d071;
+  --rojo: #b03328;
+  --verde: #3f7c3d;
+
+  --sombra: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: clamp(1rem, 4vw, 3rem) 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  font-family: var(--serif);
+  color: var(--tinta);
+  line-height: 1.55;
+
+  /* Mar: unas olas tenues sobre un degradado de profundidad. */
+  background:
+    repeating-linear-gradient(
+      -8deg,
+      transparent 0 38px,
+      var(--espuma) 38px 40px,
+      transparent 40px 78px
+    ),
+    linear-gradient(170deg, var(--mar-claro) 0%, var(--mar) 45%, var(--mar-hondo) 100%);
+  background-attachment: fixed;
+}
+
+/* --- El pergamino ------------------------------------------------------- */
+
+#app {
+  width: 100%;
+  max-width: 41rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.5), transparent 55%),
+    linear-gradient(160deg, var(--pergamino), var(--pergamino-hondo));
+  border: 2px solid #b99a63;
+  border-radius: 14px 22px 16px 20px; /* bordes desiguales: papel viejo */
+  box-shadow: var(--sombra);
+}
+
+/* --- Cabecera ----------------------------------------------------------- */
+
+header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.9rem;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px dashed rgba(109, 86, 55, 0.35);
+}
+
+.emblema {
+  grid-row: span 2;
+  width: 3.6rem;
+  height: 3.6rem;
+}
+
+.emblema .craneo,
+.emblema .huesos circle {
+  fill: #fdf8ec;
+}
+.emblema .huesos path {
+  stroke: #fdf8ec;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.emblema .ojo {
+  fill: var(--tinta);
+}
+.emblema .ala,
+.emblema .copa {
+  fill: var(--oro-claro);
+  stroke: #a97c1e;
+  stroke-width: 1.5;
+}
+.emblema .cinta {
+  fill: var(--rojo);
+}
+
+h1 {
+  align-self: end;
+  margin: 0;
+  font-size: clamp(1.6rem, 5vw, 2.3rem);
+  letter-spacing: 0.02em;
+  color: #7a2f1c;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.jugador {
+  align-self: start;
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--tinta-suave);
+}
+
+h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.25rem;
+  color: #7a2f1c;
+}
+
+section {
+  margin-top: 1.4rem;
+}
+
+/* --- Formularios y botones ---------------------------------------------- */
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.7rem 0;
+}
+
+input[type='text'] {
+  flex: 1 1 14rem;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+  color: var(--tinta);
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(109, 86, 55, 0.4);
+  border-radius: 7px;
+}
+
+input[type='text']:focus-visible {
+  outline: 3px solid var(--oro);
+  outline-offset: 1px;
+}
+
+button {
+  padding: 0.65rem 1.3rem;
+  font: inherit;
+  font-weight: 700;
+  color: #4a2c08;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro));
+  border: 2px solid #a97c1e;
+  border-radius: 7px;
+  box-shadow: 0 3px 0 #8a6417;
+  cursor: pointer;
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+button:hover {
+  background: linear-gradient(180deg, #ffe08d, var(--oro-claro));
+}
+
+button:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 #8a6417;
+}
+
+button:focus-visible {
+  outline: 3px solid #7a2f1c;
+  outline-offset: 2px;
+}
+
+.respuestas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.o {
+  margin: 0.9rem 0 0.2rem;
+  font-style: italic;
+  color: var(--tinta-suave);
+}
+
+/* --- Textos de estado --------------------------------------------------- */
+
+blockquote {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.45);
+  border-left: 5px solid var(--oro);
+  border-radius: 0 7px 7px 0;
+}
+
+.mision {
+  margin: 1.2rem 0 0;
+  font-style: italic;
+  color: var(--tinta-suave);
+}
+
+.espera {
+  margin-top: 1.4rem;
+  padding: 0.9rem 1rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--tinta-suave);
+  background: rgba(255, 255, 255, 0.35);
+  border: 2px dashed rgba(109, 86, 55, 0.35);
+  border-radius: 9px;
+}
+
+.error,
+.aviso {
+  margin: 1rem 0 0;
+  padding: 0.7rem 1rem;
+  color: #fff;
+  background: var(--rojo);
+  border-radius: 7px;
+}
+
+.historial-vacio {
+  font-style: italic;
+  color: var(--tinta-suave);
+}
+
+/* --- Historial ---------------------------------------------------------- */
+
+.historial {
+  margin: 1.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed rgba(109, 86, 55, 0.3);
+}
+
+.quien {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta-suave);
+}
+
+.dicho {
+  flex: 1 1 12rem;
+  overflow-wrap: anywhere; /* que un nombre larguísimo no desborde */
+}
+
+.respuesta {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 999px;
+}
+
+.respuesta[data-valor='si'] {
+  background: var(--verde);
+}
+.respuesta[data-valor='no'] {
+  background: var(--rojo);
+}
+.respuesta[data-valor='a-veces'] {
+  background: #9a7415;
+}
+
+/* --- Final -------------------------------------------------------------- */
+
+.final h2 {
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  text-align: center;
+}
+
+.final > p {
+  text-align: center;
+  font-size: 1.15rem;
+}
+
+.final #reiniciar {
+  display: block;
+  margin: 1.4rem auto 0;
+}
+
+/* --- Accesibilidad ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}

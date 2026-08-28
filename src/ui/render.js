@@ -6,6 +6,26 @@
  */
 
 import { ANSWERS, opponent } from '../game/state.js';
+import { normalizeName } from '../game/normalize.js';
+
+/** Calavera pirata con sombrero de paja. Dibujo propio, sin arte con derechos. */
+const EMBLEMA = `
+  <svg class="emblema" viewBox="0 0 100 100" aria-hidden="true">
+    <g class="huesos">
+      <path d="M18 74 L82 46" /><path d="M18 46 L82 74" />
+      <circle cx="16" cy="74" r="6" /><circle cx="84" cy="46" r="6" />
+      <circle cx="16" cy="46" r="6" /><circle cx="84" cy="74" r="6" />
+    </g>
+    <path class="craneo" d="M50 30 C64 30 73 40 73 53 C73 62 68 68 62 71 L62 79 C62 82 59 84 50 84
+      C41 84 38 82 38 79 L38 71 C32 68 27 62 27 53 C27 40 36 30 50 30 Z" />
+    <ellipse class="ojo" cx="41" cy="54" rx="6.5" ry="7.5" />
+    <ellipse class="ojo" cx="59" cy="54" rx="6.5" ry="7.5" />
+    <path class="ojo" d="M50 63 L46 71 L54 71 Z" />
+    <ellipse class="ala" cx="50" cy="30" rx="34" ry="8" />
+    <path class="copa" d="M31 30 C31 18 38 12 50 12 C62 12 69 18 69 30 Z" />
+    <path class="cinta" d="M31 27 L69 27 L69 31 L31 31 Z" />
+  </svg>
+`;
 
 export function render(state, playerId, error) {
   if (playerId === null) {
@@ -21,8 +41,9 @@ export function render(state, playerId, error) {
 
   return `
     <header>
+      ${EMBLEMA}
       <h1>¿Quién soy?</h1>
-      <p class="jugador">Eres el jugador ${playerId}</p>
+      <p class="jugador">Jugador ${playerId}</p>
     </header>
     ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
     ${pantalla}
@@ -124,7 +145,8 @@ function historial(state, playerId) {
         entrada.kind === 'guess'
           ? `${mia ? 'te arriesgaste' : 'se arriesgó'} con «${escapeHtml(entrada.text)}»`
           : `${escapeHtml(entrada.text)}`;
-      return `<li><span class="quien">${quien}</span> ${texto} <span class="respuesta">${escapeHtml(entrada.answer)}</span></li>`;
+      const clave = normalizeName(entrada.answer).replaceAll(' ', '-');
+      return `<li><span class="quien">${quien}</span> <span class="dicho">${texto}</span> <span class="respuesta" data-valor="${clave}">${escapeHtml(entrada.answer)}</span></li>`;
     })
     .join('');
 
