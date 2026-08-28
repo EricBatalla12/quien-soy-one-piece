@@ -12,7 +12,8 @@ se atreve a arriesgar un nombre.
 
 ## Estado
 
-✅ **v1 terminada.** Cumple los diez criterios de aceptación de la especificación.
+✅ **v1 terminada.** Cumple los diez criterios de aceptación de la especificación,
+con las salvedades recogidas en su sección 7.
 
 Este repositorio empieza por la especificación, antes que por el código:
 

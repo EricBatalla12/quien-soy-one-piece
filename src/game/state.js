@@ -97,22 +97,73 @@ export function reset() {
 }
 
 /**
+ * Combina el estado local con el que llega de la otra pestaña.
+ *
+ * En la preparación NO hay turnos: los dos jugadores escriben su personaje a la
+ * vez, cada uno partiendo de un estado en el que el otro todavía no había escrito.
+ * Quedarse con el que llega perdería una de las dos escrituras, así que ahí hay
+ * que combinar. Como la combinación no depende de quién la haga, las dos pestañas
+ * llegan al mismo resultado por su cuenta.
+ *
+ * Fuera de la preparación sí hay turnos estrictos, solo actúa un jugador cada vez
+ * y el estado que llega siempre es el más reciente.
+ */
+export function reconcile(local, remote) {
+  if (local.phase !== 'setup' || remote.phase !== 'setup') return remote;
+
+  const secretFor = {
+    1: local.secretFor[1] ?? remote.secretFor[1],
+    2: local.secretFor[2] ?? remote.secretFor[2],
+  };
+  const listos = secretFor[1] !== null && secretFor[2] !== null;
+
+  return { ...local, secretFor, phase: listos ? 'playing' : 'setup' };
+}
+
+/**
  * ¿Este valor tiene forma de estado de partida?
  *
  * El estado nos llega de otra pestaña a través del canal de sincronización, y ahí
- * podría llegar cualquier cosa (una versión vieja del juego, un mensaje corrupto).
- * Antes de pintarlo comprobamos que es lo que esperamos.
+ * podría llegar cualquier cosa: una versión vieja del juego, un mensaje corrupto,
+ * o —al estar publicado en GitHub Pages, donde todos los proyectos comparten
+ * origen— otra página que escriba en el mismo canal. Se comprueba entero, incluido
+ * lo que va dentro del historial: un solo campo inesperado ahí bastaría para
+ * romper el pintado y dejar la pestaña colgada.
  */
 export function isValidState(value) {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isObject(value) &&
     ['setup', 'playing', 'finished'].includes(value.phase) &&
-    typeof value.secretFor === 'object' &&
-    value.secretFor !== null &&
+    isValidSecrets(value.secretFor) &&
     [1, 2].includes(value.turn) &&
+    isValidPending(value.pendingQuestion) &&
     Array.isArray(value.history) &&
+    value.history.every(isValidEntry) &&
     (value.winner === null || [1, 2].includes(value.winner))
+  );
+}
+
+function isObject(value) {
+  return value !== null && typeof value === 'object';
+}
+
+function isValidSecrets(secretFor) {
+  if (!isObject(secretFor)) return false;
+  return [1, 2].every((id) => secretFor[id] === null || typeof secretFor[id] === 'string');
+}
+
+function isValidPending(pending) {
+  if (pending === null) return true;
+  return isObject(pending) && [1, 2].includes(pending.from) && typeof pending.text === 'string';
+}
+
+function isValidEntry(entry) {
+  return (
+    isObject(entry) &&
+    ['question', 'guess'].includes(entry.kind) &&
+    [1, 2].includes(entry.from) &&
+    typeof entry.text === 'string' &&
+    ANSWERS.includes(entry.answer)
   );
 }
 

@@ -12,7 +12,13 @@
 
 import { isValidState } from '../game/state.js';
 
-const CHANNEL_NAME = 'quien-soy-one-piece';
+/**
+ * Publicado en GitHub Pages, TODOS los proyectos de una cuenta comparten el mismo
+ * origen (usuario.github.io), y con él los canales. Un nombre específico evita
+ * chocar por accidente con otro proyecto; lo que protege de verdad frente a un
+ * mensaje hostil es validar el estado antes de aceptarlo, no el nombre.
+ */
+const CHANNEL_NAME = 'quien-soy-one-piece/v1';
 const IDENTITY_KEY = 'playerId';
 
 /** Cuánto esperamos a que las otras pestañas digan quiénes son. */
@@ -62,7 +68,7 @@ export async function connect({ onRemoteState }) {
   await sleep(PRESENCE_WINDOW_MS);
 
   const taken = new Set(presence.map((m) => m.playerId).filter(isPlayerNumber));
-  playerId = choosePlayerId(taken);
+  playerId = choosePlayerId(taken, Number(sessionStorage.getItem(IDENTITY_KEY)));
   if (playerId !== null) sessionStorage.setItem(IDENTITY_KEY, String(playerId));
 
   // Si alguna pestaña nos ha pasado una partida en curso, la adoptamos.
@@ -78,6 +84,15 @@ export async function connect({ onRemoteState }) {
       channel.postMessage({ type: 'state', state });
     },
 
+    /**
+     * Actualiza el estado que enseñaremos a quien entre después, sin difundirlo.
+     * Hace falta cuando quien llama combina el estado recibido con el suyo: el
+     * resultado es el bueno, pero la otra pestaña ya ha hecho esa misma cuenta.
+     */
+    remember(state) {
+      currentState = state;
+    },
+
     close() {
       channel.close();
     },
@@ -87,11 +102,12 @@ export async function connect({ onRemoteState }) {
 /**
  * Elige número de jugador entre los que quedan libres.
  *
- * `sessionStorage` es por pestaña (a diferencia de `localStorage`, que es
- * compartido), así que al recargar recuperamos el mismo número que teníamos.
+ * `remembered` es el número que esta pestaña ya tenía, guardado en `sessionStorage`
+ * —que es por pestaña, a diferencia de `localStorage`, que es compartido—, para que
+ * al recargar se recupere el mismo. Se recibe como parámetro en vez de leerlo aquí
+ * para que la función sea pura y se pueda testear fuera del navegador.
  */
-function choosePlayerId(taken) {
-  const remembered = Number(sessionStorage.getItem(IDENTITY_KEY));
+export function choosePlayerId(taken, remembered) {
   if (isPlayerNumber(remembered) && !taken.has(remembered)) return remembered;
 
   return [1, 2].find((id) => !taken.has(id)) ?? null;

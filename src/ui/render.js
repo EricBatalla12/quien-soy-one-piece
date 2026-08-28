@@ -68,7 +68,7 @@ function pantallaPreparacion(state, playerId) {
       <h2>Elige el personaje del jugador ${rival}</h2>
       <p>Escribe el personaje que tu rival tendrá que adivinar. No dejes que lo vea.</p>
       <form id="form-secreto">
-        <input name="texto" type="text" autocomplete="off" placeholder="Roronoa Zoro" required />
+        <input id="entrada-secreto" name="texto" type="text" autocomplete="off" placeholder="Roronoa Zoro" required />
         <button type="submit">Listo</button>
       </form>
     </section>
@@ -99,12 +99,12 @@ function pantallaJuego(state, playerId) {
       <section class="acciones">
         <h2>Es tu turno</h2>
         <form id="form-pregunta">
-          <input name="texto" type="text" autocomplete="off" placeholder="¿Eres espadachín?" required />
+          <input id="entrada-pregunta" name="texto" type="text" autocomplete="off" placeholder="¿Eres espadachín?" required />
           <button type="submit">Preguntar</button>
         </form>
         <p class="o">o arriésgate</p>
         <form id="form-adivinar">
-          <input name="texto" type="text" autocomplete="off" placeholder="Creo que soy…" required />
+          <input id="entrada-adivinar" name="texto" type="text" autocomplete="off" placeholder="Creo que soy…" required />
           <button type="submit">Adivinar</button>
         </form>
       </section>
@@ -140,12 +140,12 @@ function historial(state, playerId) {
   const filas = state.history
     .map((entrada) => {
       const mia = entrada.from === playerId;
-      const quien = mia ? 'Tú' : `Jugador ${entrada.from}`;
+      const quien = mia ? 'Tú' : `Jugador ${escapeHtml(entrada.from)}`;
       const texto =
         entrada.kind === 'guess'
           ? `${mia ? 'te arriesgaste' : 'se arriesgó'} con «${escapeHtml(entrada.text)}»`
           : `${escapeHtml(entrada.text)}`;
-      const clave = normalizeName(entrada.answer).replaceAll(' ', '-');
+      const clave = escapeHtml(normalizeName(entrada.answer).replaceAll(' ', '-'));
       return `<li><span class="quien">${quien}</span> <span class="dicho">${texto}</span> <span class="respuesta" data-valor="${clave}">${escapeHtml(entrada.answer)}</span></li>`;
     })
     .join('');
@@ -163,5 +163,8 @@ function escapeHtml(text) {
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+    .replaceAll('"', '&quot;')
+    // Hoy todos los atributos van entre comillas dobles, así que la simple es
+    // inofensiva. Se escapa igual para que no dependa de esa costumbre.
+    .replaceAll("'", '&#39;');
 }

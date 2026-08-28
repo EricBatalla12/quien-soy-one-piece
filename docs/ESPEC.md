@@ -64,8 +64,11 @@ Todo vive en el navegador. No se envía nada a ningún servidor.
 | Fase de la partida | preparación / jugando / terminada |
 | Historial | Lista de preguntas con su respuesta y quién la hizo |
 | Ganador | Solo cuando la partida ha terminado |
+| Número de jugador de la pestaña | En `sessionStorage`, que es propio de cada pestaña |
 
-Nada persiste entre partidas: al recargar, se empieza de cero.
+Nada se guarda en disco ni sobrevive a cerrar el navegador. **Recargar una pestaña
+no pierde la partida**: al volver, pregunta a la otra pestaña por el estado actual y
+lo recupera. Si se cierran las dos, la partida desaparece.
 
 ## 6. Tecnología
 
@@ -82,6 +85,14 @@ Nada persiste entre partidas: al recargar, se empieza de cero.
   conscientemente en v1: el juego es para dos personas que no quieren hacer trampa.
   Un secreto real exigiría servidor, que está fuera de alcance.
 - Al ser dos pestañas del mismo navegador, ambos jugadores comparten dispositivo.
+- **Abrir las dos pestañas en el mismo instante** (menos de 200 ms) puede hacer que
+  las dos se asignen el jugador 1, y entonces ambas podrían actuar en el mismo
+  turno. Se asume porque una persona abre las pestañas con segundos de diferencia;
+  si ocurre, se arregla recargando una de las dos.
+- **Publicado en GitHub Pages, todos los proyectos de una cuenta comparten origen**
+  (`usuario.github.io`) y con él el canal entre pestañas. Por eso el estado que
+  llega por el canal se valida entero antes de aceptarlo, en lugar de confiar en
+  que solo escriba el propio juego.
 - El personaje se escribe libre: "Luffy" y "Monkey D. Luffy" son textos distintos y
   la comparación al arriesgar tendrá que ser tolerante (ver criterios de aceptación).
 
