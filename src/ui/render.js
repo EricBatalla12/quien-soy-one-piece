@@ -6,7 +6,25 @@
  */
 
 import { ANSWERS, opponent } from '../game/state.js';
-import { normalizeName } from '../game/normalize.js';
+
+/**
+ * Clave con la que cada respuesta se pinta de un color.
+ *
+ * Está atada a los selectores `[data-valor=…]` de `styles/main.css`. Se escribe a
+ * mano, y no derivándola de `normalizeName`, para que esa función tenga un solo
+ * cometido —comparar personajes— y cambiarla no descoloque los colores sin avisar.
+ * Hay un test que comprueba que las tres respuestas del juego sigan teniendo la
+ * suya y que el CSS las contemple.
+ */
+const ANSWER_KEYS = new Map([
+  ['sí', 'si'],
+  ['no', 'no'],
+  ['a veces', 'a-veces'],
+]);
+
+export function answerKey(answer) {
+  return ANSWER_KEYS.get(answer) ?? 'desconocida';
+}
 
 /** Calavera pirata con sombrero de paja. Dibujo propio, sin arte con derechos. */
 const EMBLEMA = `
@@ -145,7 +163,7 @@ function historial(state, playerId) {
         entrada.kind === 'guess'
           ? `${mia ? 'te arriesgaste' : 'se arriesgó'} con «${escapeHtml(entrada.text)}»`
           : `${escapeHtml(entrada.text)}`;
-      const clave = escapeHtml(normalizeName(entrada.answer).replaceAll(' ', '-'));
+      const clave = escapeHtml(answerKey(entrada.answer));
       return `<li><span class="quien">${quien}</span> <span class="dicho">${texto}</span> <span class="respuesta" data-valor="${clave}">${escapeHtml(entrada.answer)}</span></li>`;
     })
     .join('');

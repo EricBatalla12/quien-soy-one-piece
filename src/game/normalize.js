@@ -6,8 +6,16 @@
  * valer igual. Es el criterio de aceptación 8.
  */
 
-/** Quita mayúsculas, acentos y espacios sobrantes. */
+/**
+ * Quita mayúsculas, acentos y espacios sobrantes.
+ *
+ * Lo que no es texto se trata como un nombre vacío, igual que hace `isBlank`. Estas
+ * dos funciones se usan juntas y sería incoherente que una tolerase lo que la otra
+ * rechaza: colaría un TypeError en inglés hasta una interfaz en español.
+ */
 export function normalizeName(name) {
+  if (typeof name !== 'string') return '';
+
   return name
     .normalize('NFD') // separa cada letra de su acento
     .replace(/\p{Mn}/gu, '') // y borra los acentos, que quedan sueltos

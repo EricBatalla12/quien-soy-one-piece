@@ -6,9 +6,17 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
-import { createGame, setSecret, askQuestion, answerQuestion, guess } from '../src/game/state.js';
-import { render } from '../src/ui/render.js';
+import {
+  ANSWERS,
+  createGame,
+  setSecret,
+  askQuestion,
+  answerQuestion,
+  guess,
+} from '../src/game/state.js';
+import { render, answerKey } from '../src/ui/render.js';
 
 /**
  * Partida en marcha:
@@ -134,4 +142,29 @@ test('cada respuesta lleva su marca para poder distinguirla en pantalla', () => 
   state = answerQuestion(state, 2, 'a veces');
 
   assert.ok(render(state, 1, null).includes('data-valor="a-veces"'));
+});
+
+// El color de cada respuesta vive en el CSS y la clave en el JavaScript: dos sitios
+// que solo coinciden por disciplina. Este test los ata, para que añadir una
+// respuesta al juego y olvidarse del color deje de ser posible.
+test('las tres respuestas tienen clave propia y color en el CSS', () => {
+  const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
+  const claves = new Set();
+
+  for (const answer of ANSWERS) {
+    const clave = answerKey(answer);
+
+    assert.notEqual(clave, 'desconocida', `«${answer}» no tiene clave asignada`);
+    assert.ok(!claves.has(clave), `«${answer}» repite la clave «${clave}»`);
+    claves.add(clave);
+
+    assert.ok(
+      css.includes(`[data-valor='${clave}']`) || css.includes(`[data-valor="${clave}"]`),
+      `falta el color de «${clave}» en styles/main.css`,
+    );
+  }
+});
+
+test('una respuesta que no existe en el juego no finge tener color', () => {
+  assert.equal(answerKey('quizá'), 'desconocida');
 });

@@ -41,3 +41,14 @@ test('isBlank no se rompe si le llega algo que no es texto', () => {
   assert.ok(isBlank(undefined));
   assert.ok(isBlank(42));
 });
+
+test('normalizar tampoco se rompe: lo que no es texto no tiene nombre', () => {
+  for (const raro of [null, undefined, 42, {}, []]) {
+    assert.equal(normalizeName(raro), '', `debería tratar ${JSON.stringify(raro)} como vacío`);
+  }
+});
+
+test('un nombre de verdad nunca coincide con algo que no es texto', () => {
+  assert.ok(!sameName('Zoro', null));
+  assert.ok(!sameName('Zoro', 42));
+});
