@@ -15,6 +15,14 @@ test('se sirve lo que necesita el navegador', () => {
   assert.equal(publicPath('/src/client/ui/render.js'), 'src/client/ui/render.js');
 });
 
+// El catálogo llega por HTTP y no por el WebSocket (sección 6.3 de la espec v3), así
+// que el navegador tiene que poder pedirlo, y con él las dos piezas que lo manejan.
+test('el catálogo y lo que hace falta para buscar en él sí se sirven', () => {
+  assert.equal(publicPath('/data/characters.json'), 'data/characters.json');
+  assert.equal(publicPath('/src/game/catalog.js'), 'src/game/catalog.js');
+  assert.equal(publicPath('/src/game/normalize.js'), 'src/game/normalize.js');
+});
+
 test('no se sirve nada más del repositorio', () => {
   for (const url of [
     '/package.json',
@@ -22,6 +30,8 @@ test('no se sirve nada más del repositorio', () => {
     '/docs/ESPEC-V2.md',
     '/src/server/server.js',
     '/src/game/state.js',
+    '/src/game/view.js',
+    '/data/corrections.json',
     '/src/server/lobby.js',
     '/node_modules/ws/package.json',
     '/.env',
@@ -51,5 +61,6 @@ test('cada extensión con su tipo, y lo desconocido sin adivinar', () => {
   assert.match(contentType('index.html'), /text\/html/);
   assert.match(contentType('styles/main.css'), /text\/css/);
   assert.match(contentType('src/client/main.js'), /javascript/);
+  assert.match(contentType('data/characters.json'), /application\/json/);
   assert.equal(contentType('algo.raro'), 'application/octet-stream');
 });

@@ -10,12 +10,23 @@
  * directorio se pueden testear sin levantar nada.
  */
 
-/** Ficheros sueltos que se sirven tal cual. */
-const PUBLIC_FILES = ['index.html'];
+/**
+ * Ficheros sueltos que se sirven tal cual.
+ *
+ * Además del juego, el catálogo de personajes y las dos piezas puras que el
+ * navegador necesita para buscar en él. Se nombran una a una en vez de abrir
+ * `src/game/`: ahí también viven las reglas y la vista, que son cosa del servidor.
+ */
+const PUBLIC_FILES = [
+  'index.html',
+  'data/characters.json',
+  'src/game/catalog.js',
+  'src/game/normalize.js',
+];
 
 /**
  * Carpetas públicas enteras. Solo la interfaz: desde la v2 las reglas corren en el
- * servidor, así que el navegador no necesita `src/game` y no se sirve.
+ * servidor, así que el navegador no necesita `src/game` entero y no se sirve.
  */
 const PUBLIC_DIRS = ['styles/', 'src/client/'];
 
