@@ -11,18 +11,20 @@ Podéis estar en ordenadores distintos.
 
 ## Estado
 
-🚧 **v2 en construcción.** El juego funciona de principio a fin contra el servidor;
-falta desplegarlo. La [espec de la v2](docs/ESPEC-V2.md) lleva la cuenta de qué entra
-y de cuándo se dará por terminada.
+✅ **v2 terminada y desplegada.** Dos personas juegan desde ordenadores distintos, con
+el secreto guardado de verdad en el servidor.
+
+🚧 **v3 en especificación.** El personaje pasará a elegirse de un catálogo cerrado en
+vez de escribirse a mano.
 
 ✅ **v1 terminada** y sustituida por la v2. Se jugaba en dos pestañas del mismo
-navegador, sin servidor; su especificación se conserva en [`docs/ESPEC.md`](docs/ESPEC.md).
+navegador, sin servidor.
 
 Este repositorio empieza por la especificación, antes que por el código:
 
-- [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — qué se construye ahora, qué queda fuera y
-  cuándo se considera terminado.
-- [`docs/ESPEC.md`](docs/ESPEC.md) — la v1, como registro de lo ya construido.
+- [`docs/ESPEC-V3.md`](docs/ESPEC-V3.md) — lo que se va a construir.
+- [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — lo que está en marcha.
+- [`docs/ESPEC.md`](docs/ESPEC.md) — la v1, como registro.
 - [`CLAUDE.md`](CLAUDE.md) — reglas de trabajo dentro del repositorio.
 
 ## Desarrollo

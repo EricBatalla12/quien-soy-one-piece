@@ -3,9 +3,12 @@
 Juego web de "¿Quién soy?" para dos jugadores desde ordenadores distintos, con un
 servidor Node por medio.
 
-**La especificación manda: `docs/ESPEC-V2.md`.** Léela antes de proponer o escribir
-nada. `docs/ESPEC.md` es la v1, ya sustituida: se conserva como registro, no como
-guía de lo que hay que hacer.
+**La especificación manda.** Léela antes de proponer o escribir nada:
+
+- `docs/ESPEC-V3.md` es lo que se está construyendo ahora: el catálogo de personajes.
+- `docs/ESPEC-V2.md` describe lo ya construido y en marcha; sus criterios de
+  aceptación siguen teniendo que cumplirse.
+- `docs/ESPEC.md` es la v1, sustituida: se conserva como registro, no como guía.
 
 ## Reglas de trabajo
 
