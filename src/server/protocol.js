@@ -56,6 +56,8 @@ export function readMessage(raw) {
       return { type: 'guess', characterId: readCharacterId(message.characterId) };
     case 'rematch':
       return { type: 'rematch' };
+    case 'leave':
+      return { type: 'leave' };
     default:
       throw new Error('Esa acción no existe');
   }

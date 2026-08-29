@@ -8,7 +8,7 @@
  * navegador: el DOM, el almacén y el socket.
  */
 
-import { initialModel, reconnected, receive, sending, withStatus } from './app.js';
+import { confirmsLeaving, initialModel, reconnected, receive, sending, withStatus } from './app.js';
 import { createCatalog } from '../game/catalog.js';
 import { isPinned, moveClue, noClues, pinClue, unpinClue } from './clues.js';
 import { chosen, highlighted, moveHighlight, noPicker, searching } from './picker.js';
@@ -41,6 +41,9 @@ let catalog = null;
 
 /** Qué has escrito y qué has elegido en el selector de personaje. */
 let picker = noPicker();
+
+/** Si has pulsado salir de la sala y falta confirmarlo. */
+let leaving = false;
 
 /**
  * Tu tablero de pistas. Vive aquí y no en el modelo porque no viene del servidor ni
@@ -109,6 +112,14 @@ function presentToken() {
 function handle(message) {
   const { model: next, session } = receive(model, message);
   model = next;
+
+  // Fuera de una sala no queda nada que elegir ni que confirmar, y lo que se quedara
+  // a medias reaparecería en la sala siguiente.
+  if (model.view === null) {
+    picker = noPicker();
+    leaving = false;
+  }
+
   applyToSession(session);
   loadClues();
   paint();
@@ -160,7 +171,7 @@ function paint() {
   const typed = captureTyping();
   const scrolled = captureScroll();
 
-  app.innerHTML = render({ ...model, clues, catalog, picker });
+  app.innerHTML = render({ ...model, clues, catalog, picker, leaving });
 
   restoreTyping(typed);
   restoreScroll(scrolled);
@@ -256,6 +267,11 @@ app.addEventListener('submit', (event) => {
   }
 });
 
+function leaveRoom() {
+  leaving = false;
+  send({ type: 'leave' });
+}
+
 /** Manda el personaje elegido y deja el selector en blanco para la próxima vez. */
 function sendCharacter(type, characterId) {
   picker = noPicker();
@@ -345,6 +361,30 @@ app.addEventListener('click', (event) => {
 
   if (button.id === 'rematch') {
     send({ type: 'rematch' });
+    return;
+  }
+
+  // Salir cierra la sala también para el rival, así que con él sentado se pregunta
+  // antes; solo en una sala vacía se sale de un clic.
+  if (button.id === 'leave') {
+    if (confirmsLeaving(model.view)) {
+      leaving = true;
+      paint();
+      return;
+    }
+
+    leaveRoom();
+    return;
+  }
+
+  if (button.id === 'leave-confirm') {
+    leaveRoom();
+    return;
+  }
+
+  if (button.id === 'leave-cancel') {
+    leaving = false;
+    paint();
     return;
   }
 

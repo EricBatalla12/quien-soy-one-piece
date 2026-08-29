@@ -63,6 +63,7 @@ function player(at = port) {
     open: withTimeout(new Promise((resolve) => socket.once('open', resolve)), 'abriendo el socket'),
     send: (message) => socket.send(JSON.stringify(message)),
     close: () => socket.close(),
+    isOpen: () => socket.readyState === socket.OPEN,
     next,
     /** Todo lo que ha llegado por el cable, tal cual. */
     wire: () => JSON.stringify(received),
@@ -302,6 +303,94 @@ test('sin el token no se recupera la plaza de nadie', async () => {
 
   impostor.close();
   guest.close();
+});
+
+// ---------------------------------------------------------------------------
+// Salir de la sala
+// ---------------------------------------------------------------------------
+
+test('salir de la sala cierra la partida para los dos', async () => {
+  const { host, guest, code } = await playing();
+
+  guest.send({ type: 'leave' });
+
+  // Quien se va no lee ningún aviso: la sala la ha cerrado él.
+  await guest.next('left');
+
+  const kicked = await host.next('expired');
+  assert.match(kicked.message, /Nami ha salido de la sala/);
+
+  // Y la sala ya no existe para nadie más.
+  const late = player();
+  await late.open;
+  late.send({ type: 'join', code, name: 'Usopp' });
+  assert.match((await late.next('error')).message, /No existe ninguna sala/);
+
+  late.close();
+  host.close();
+  guest.close();
+});
+
+test('quien sale puede crear otra sala sin recargar la página', async () => {
+  const { host, guest } = await playing();
+
+  guest.send({ type: 'leave' });
+  await guest.next('left');
+
+  guest.send({ type: 'create', name: 'Nami' });
+  const seated = await guest.next('seated');
+
+  assert.equal(seated.playerId, 1, 'su plaza anterior ya no le ata a nada');
+
+  host.close();
+  guest.close();
+});
+
+// A quien echan de la sala no se le cierra el socket: pasaría por una reconexión y
+// leería que su sitio le espera cuando ya no hay sitio.
+test('al que se queda tampoco se le corta la conexión, y puede empezar otra partida', async () => {
+  const { host, guest } = await playing();
+
+  guest.send({ type: 'leave' });
+  await host.next('expired');
+
+  assert.ok(host.isOpen(), 'el socket del que se queda sigue abierto');
+
+  host.send({ type: 'create', name: 'Eric' });
+  const seated = await host.next('seated');
+
+  assert.equal(seated.playerId, 1);
+
+  host.close();
+  guest.close();
+});
+
+test('salir de una sala en la que aún no ha entrado nadie no molesta a nadie', async () => {
+  const alone = player();
+  await alone.open;
+  alone.send({ type: 'create', name: 'Eric' });
+  const seated = await alone.next('seated');
+
+  alone.send({ type: 'leave' });
+  await alone.next('left');
+
+  const late = player();
+  await late.open;
+  late.send({ type: 'join', code: seated.code, name: 'Nami' });
+  assert.match((await late.next('error')).message, /No existe ninguna sala/);
+
+  late.close();
+  alone.close();
+});
+
+test('no se puede salir de una sala en la que no estás', async () => {
+  const loose = player();
+  await loose.open;
+  loose.send({ type: 'leave' });
+
+  assert.match((await loose.next('error')).message, /Todavía no estás en ninguna sala/);
+
+  loose.close();
 });
 
 // ---------------------------------------------------------------------------

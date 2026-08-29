@@ -28,6 +28,7 @@ test('las acciones buenas pasan y salen limpias', () => {
     answer: 'a veces',
   });
   assert.deepEqual(readMessage(wire({ type: 'rematch' })), { type: 'rematch' });
+  assert.deepEqual(readMessage(wire({ type: 'leave' })), { type: 'leave' });
 });
 
 test('lo que no es un mensaje no se entiende', () => {
@@ -108,5 +109,7 @@ test('solo valen las tres respuestas del juego', () => {
 
 test('se distingue entrar en una sala de jugar dentro de ella', () => {
   for (const type of ['create', 'join', 'resume']) assert.ok(isEntryType(type));
-  for (const type of ['secret', 'ask', 'answer', 'guess', 'rematch']) assert.ok(!isEntryType(type));
+  for (const type of ['secret', 'ask', 'answer', 'guess', 'rematch', 'leave']) {
+    assert.ok(!isEntryType(type));
+  }
 });

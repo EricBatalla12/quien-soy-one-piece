@@ -112,6 +112,20 @@ export function createLobby({
     },
 
     /**
+     * Cierra una sala porque alguien se ha ido: deja de existir para los dos.
+     *
+     * No se queja si ya no estaba —pudo caducar justo antes—, porque quien se va se
+     * va igual. Devuelve la sala que había, o `null`, para que el servidor sepa a
+     * quién avisar y con qué nombre.
+     */
+    close(code) {
+      const room = rooms.get(code) ?? null;
+      rooms.delete(code);
+
+      return room;
+    },
+
+    /**
      * Tira las salas caducadas y devuelve cuáles eran, para que el servidor avise a
      * quien siguiera conectado antes de cerrarle el socket.
      */

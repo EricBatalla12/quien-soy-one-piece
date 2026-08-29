@@ -640,6 +640,65 @@ form button[type='submit']:disabled {
   }
 }
 
+/* --- Salir de la sala ---------------------------------------------------- */
+
+/*
+ * La vuelta atrás va al final de la sala y no en la cabecera: es la salida, no una
+ * acción de la partida, y arriba competiría con el código y el marcador.
+ */
+.leave {
+  margin: 1.6rem 0 0;
+  text-align: center;
+}
+
+/* De papel, no de oro: los botones dorados son los de jugar. */
+#leave {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid rgba(109, 86, 55, 0.35);
+  box-shadow: none;
+}
+
+#leave:hover {
+  color: var(--ink);
+  background: rgba(109, 86, 55, 0.1);
+}
+
+/* Preguntar antes de cerrarle la sala al rival: aquí sí se para la vista. */
+.leave.asking {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+
+  margin-top: 1.6rem;
+  padding: 0.9rem 1rem;
+  background: rgba(176, 51, 40, 0.1);
+  border: 2px solid rgba(176, 51, 40, 0.35);
+  border-radius: 11px;
+}
+
+.leave.asking p {
+  flex: 1 1 100%;
+  margin: 0;
+  text-align: center;
+}
+
+#leave-confirm {
+  color: #fff;
+  background: linear-gradient(180deg, #c8483c, var(--red));
+  border-color: #7d241c;
+  box-shadow: 0 3px 0 #67201a;
+}
+
+#leave-confirm:hover {
+  background: linear-gradient(180deg, #d4665a, #bd3b2f);
+}
+
 /* --- El tablero de pistas ----------------------------------------------- */
 
 .clues {

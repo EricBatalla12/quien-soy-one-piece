@@ -68,9 +68,25 @@ export function receive(model, message) {
     case 'expired':
       return { model: { ...model, view: null, error: message.message }, session: 'forget' };
 
+    // Te has salido tú: a la pantalla de entrada, y sin ningún aviso que leer. Que la
+    // sala ya no está lo sabes de sobra, porque acabas de cerrarla.
+    case 'left':
+      return { model: { ...model, view: null, error: null }, session: 'forget' };
+
     default:
       return { model, session: 'keep' };
   }
+}
+
+/**
+ * ¿Hay que preguntar antes de salir de la sala?
+ *
+ * Esperando solo en una sala recién creada, salir no le rompe la partida a nadie y
+ * un clic basta. Con el rival ya sentado, salir cierra la sala también para él, así
+ * que un roce sin querer no puede llevárselo por delante.
+ */
+export function confirmsLeaving(view) {
+  return view !== null && view.rival !== null;
 }
 
 /** Se acaba de mandar una acción: se limpia el error anterior. */

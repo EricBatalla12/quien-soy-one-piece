@@ -1,7 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { initialModel, reconnected, receive, sending, withStatus } from '../src/client/app.js';
+import {
+  confirmsLeaving,
+  initialModel,
+  reconnected,
+  receive,
+  sending,
+  withStatus,
+} from '../src/client/app.js';
 
 const SESSION = { code: 'NAKAM', token: 'abc' };
 const VIEW = { code: 'NAKAM', phase: 'playing', you: { id: 1, name: 'Eric' } };
@@ -131,4 +138,33 @@ test('un mensaje desconocido no cambia nada', () => {
 
   assert.equal(model, before);
   assert.equal(session, 'keep');
+});
+
+// ---------------------------------------------------------------------------
+// Salir de la sala
+// ---------------------------------------------------------------------------
+
+test('salir te devuelve a la entrada, sin nada que leer y sin plaza guardada', () => {
+  const { model, session } = receive(playing(), { type: 'left' });
+
+  assert.equal(model.view, null);
+  assert.equal(model.error, null, 'la sala la has cerrado tú: no hay aviso que dar');
+  assert.equal(session, 'forget');
+});
+
+test('que se salga el rival sí se avisa, y también te saca de la sala', () => {
+  const { model, session } = receive(playing(), {
+    type: 'expired',
+    message: 'Nami ha salido de la sala',
+  });
+
+  assert.equal(model.view, null);
+  assert.equal(model.error, 'Nami ha salido de la sala');
+  assert.equal(session, 'forget');
+});
+
+test('con el rival sentado se pregunta antes de salir; esperando solo, no', () => {
+  assert.ok(confirmsLeaving({ ...VIEW, rival: { id: 2, name: 'Nami' } }));
+  assert.ok(!confirmsLeaving({ ...VIEW, rival: null }));
+  assert.ok(!confirmsLeaving(null), 'sin sala no hay de qué salir');
 });

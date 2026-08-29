@@ -35,6 +35,24 @@ test('un lobby sin catálogo no arranca: no podría validar ningún personaje', 
   assert.throws(() => createLobby(), /catálogo/);
 });
 
+test('cerrar una sala la borra, y devuelve la que había para poder avisar', () => {
+  const { lobby } = fakeLobby();
+  const host = lobby.open('Eric');
+  lobby.join(host.code, 'Nami');
+
+  const closed = lobby.close(host.code);
+
+  assert.equal(closed.players[1].name, 'Eric');
+  assert.equal(lobby.size, 0);
+  assert.throws(() => lobby.view(host.code, 1), /No existe/);
+});
+
+test('cerrar una sala que ya no está no se queja: quien se va se va igual', () => {
+  const { lobby } = fakeLobby();
+
+  assert.equal(lobby.close('NAKAM'), null);
+});
+
 /** Sala con los dos jugadores dentro y sus dos tokens. */
 function seated() {
   const { lobby, advance } = fakeLobby();

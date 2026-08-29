@@ -85,8 +85,48 @@ export function startServer({
 
     if (seat.code === null) throw new Error('Todavía no estás en ninguna sala');
 
+    if (message.type === 'leave') {
+      leave(socket, seat);
+      return;
+    }
+
     lobby.act(seat.code, seat.playerId, message);
     broadcast(seat.code);
+  }
+
+  /**
+   * Un jugador se sale de la sala, y la sala se acaba para los dos: sin rival no hay
+   * partida que seguir, y dejarla viva solo dejaría al otro esperando a alguien que
+   * no va a volver.
+   *
+   * Al rival se le avisa con `expired`, que es el mensaje de "esta sala ya no
+   * existe": lo que cambia es el motivo. A los dos se les vacía la plaza en vez de
+   * cerrarles el socket —como sí hace una sala caducada—, para que ninguno pase por
+   * una reconexión ni lea que su sitio le espera cuando ya no hay sitio.
+   */
+  function leave(socket, seat) {
+    const room = lobby.close(seat.code);
+    const who = room === null ? 'Tu rival' : room.players[seat.playerId].name;
+
+    for (const [playerId, other] of Object.entries(sockets.get(seat.code) ?? {})) {
+      if (Number(playerId) === seat.playerId) continue;
+
+      send(other, { type: 'expired', message: `${who} ha salido de la sala` });
+      freeSeat(other);
+    }
+
+    sockets.delete(seat.code);
+    freeSeat(socket);
+
+    send(socket, { type: 'left' });
+  }
+
+  /** Deja el socket sin sala, listo para crear otra o entrar en una distinta. */
+  function freeSeat(socket) {
+    if (socket.seat === undefined) return;
+
+    socket.seat.code = null;
+    socket.seat.playerId = null;
   }
 
   function enter(socket, seat, message) {
@@ -102,6 +142,11 @@ export function startServer({
     seat.code = seated.code;
     seat.playerId = seated.playerId;
     takeSeat(seated.code, seated.playerId, socket);
+
+    // La plaza cuelga también del socket para poder vaciársela a otro sin cerrarle la
+    // conexión, que es lo que hace que salir de una sala no le provoque al rival una
+    // reconexión y el aviso, ya falso, de que su sitio le espera.
+    socket.seat = seat;
 
     // El token solo se manda a quien acaba de sentarse, nunca en la vista.
     send(socket, { type: 'seated', code: seated.code, playerId: seated.playerId, token: seated.token });

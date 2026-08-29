@@ -63,8 +63,17 @@ const EMPTY_PICKER = { query: '', chosenId: null, highlight: 0 };
  * `clues` son las preguntas que has guardado en tu tablero, en tu orden.
  * `catalog` es la lista de personajes, o null mientras se está descargando.
  * `picker` es qué has escrito y qué has elegido en el selector.
+ * `leaving` es si has pulsado salir y falta confirmarlo.
  */
-export function render({ view, status, error, clues = [], catalog = null, picker = EMPTY_PICKER }) {
+export function render({
+  view,
+  status,
+  error,
+  clues = [],
+  catalog = null,
+  picker = EMPTY_PICKER,
+  leaving = false,
+}) {
   return `
     <header>
       ${EMBLEM}
@@ -73,7 +82,7 @@ export function render({ view, status, error, clues = [], catalog = null, picker
     </header>
     ${connectionNotice(status)}
     ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
-    ${view === null ? entryScreen() : roomScreen(view, { clues, catalog, picker })}
+    ${view === null ? entryScreen() : roomScreen(view, { clues, catalog, picker, leaving })}
   `;
 }
 
@@ -124,7 +133,7 @@ function entryScreen() {
   `;
 }
 
-function roomScreen(view, { clues, catalog, picker }) {
+function roomScreen(view, { clues, catalog, picker, leaving }) {
   const screen =
     view.phase === 'waiting'
       ? waitingScreen(view)
@@ -134,7 +143,34 @@ function roomScreen(view, { clues, catalog, picker }) {
           ? boardScreen(view, clues, catalog, picker)
           : endScreen(view);
 
-  return `${rivalNotice(view)}${screen}`;
+  return `${rivalNotice(view)}${screen}${leaveSection(view, leaving)}`;
+}
+
+/**
+ * La salida de la sala, en todas sus pantallas: esperando rival, eligiendo, jugando
+ * o al terminar. Es la vuelta atrás a la pantalla de entrada.
+ *
+ * La confirmación se pinta aquí dentro en vez de abrir un diálogo del navegador: así
+ * es una pantalla más, se puede leer y testear como cualquier otra, y en un móvil no
+ * aparece una ventana del sistema encima de la partida.
+ */
+function leaveSection(view, leaving) {
+  if (!leaving) {
+    return `<p class="leave">
+      <button type="button" id="leave">← Salir de la sala</button>
+    </p>`;
+  }
+
+  const rival = view.rival === null ? null : escapeHtml(view.rival.name);
+
+  return `<section class="leave asking">
+    <p>
+      Si sales, la sala se cierra${rival === null ? '' : ` también para ${rival}`}
+      y la partida no se puede retomar.
+    </p>
+    <button type="button" id="leave-confirm">Salir de todas formas</button>
+    <button type="button" id="leave-cancel">Seguir aquí</button>
+  </section>`;
 }
 
 /** Que el rival se haya caído se avisa siempre, se esté en la fase que se esté. */

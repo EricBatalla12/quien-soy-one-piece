@@ -436,3 +436,52 @@ test('las clases nuevas de la v2 existen en el CSS', () => {
     assert.match(css, new RegExp(`\\${selector}[\\s,{]`), `falta ${selector} en el CSS`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Salir de la sala
+// ---------------------------------------------------------------------------
+
+test('se puede salir desde cualquier pantalla de la sala', () => {
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const finished = guess(startedGame(), 1, 'nico-robin', CATALOG);
+
+  const screens = {
+    esperando: html({ view: projectView(alone, 1, CATALOG) }),
+    preparación: html({ view: viewOf(createGame(), 1) }),
+    jugando: html({ view: viewOf(startedGame(), 1) }),
+    final: html({ view: viewOf(finished, 1) }),
+  };
+
+  for (const [name, out] of Object.entries(screens)) {
+    assert.match(out, /id="leave"/, `falta la salida en la pantalla de ${name}`);
+  }
+});
+
+test('en la pantalla de entrada no hay de dónde salir', () => {
+  assert.ok(!html({ view: null }).includes('id="leave"'));
+});
+
+test('la confirmación avisa de que la sala se cierra también para el rival', () => {
+  const out = html({ view: viewOf(startedGame(), 1), leaving: true });
+
+  assert.match(out, /también para Nami/);
+  assert.match(out, /id="leave-confirm"/);
+  assert.match(out, /id="leave-cancel"/);
+  assert.ok(!out.includes('id="leave"'), 'ya no se vuelve a ofrecer, se está preguntando');
+});
+
+test('esperando solo, la confirmación no habla de ningún rival', () => {
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const out = html({ view: projectView(alone, 1, CATALOG), leaving: true });
+
+  assert.match(out, /la sala se cierra\s*y la partida/);
+  assert.ok(!out.includes('también para'));
+});
+
+test('la salida existe en el CSS', () => {
+  const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
+
+  for (const selector of ['.leave', '#leave', '#leave-confirm']) {
+    assert.match(css, new RegExp(`\\${selector}[\\s,:{.]`), `falta ${selector} en el CSS`);
+  }
+});
