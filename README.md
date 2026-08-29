@@ -2,28 +2,29 @@
 
 Juego web de "¿Quién soy?" para dos jugadores, con temática de One Piece.
 
-Cada jugador escribe en secreto el personaje que su rival deberá adivinar. Por turnos,
-se hacen preguntas que se responden con **Sí**, **No** o **A veces**, hasta que alguien
-se atreve a arriesgar un nombre.
+Cada jugador elige en secreto, de una lista de personajes de One Piece, el que su
+rival deberá adivinar. Por turnos, se hacen preguntas que se responden con **Sí**,
+**No** o **A veces**, hasta que alguien se atreve a arriesgar un personaje.
 
 Uno crea una sala, le dicta el código de cinco letras a la otra persona, y a jugar.
 Podéis estar en ordenadores distintos.
 
 ## Estado
 
+✅ **v3 terminada.** El personaje se elige de un catálogo cerrado de 783 personajes en
+vez de escribirse a mano: se busca, se pulsa, y acertar se decide comparando
+identificadores. Se acabó fallar por escribir "Luffy" donde ponía "Monkey D. Luffy".
+
 ✅ **v2 terminada y desplegada.** Dos personas juegan desde ordenadores distintos, con
 el secreto guardado de verdad en el servidor.
-
-🚧 **v3 en especificación.** El personaje pasará a elegirse de un catálogo cerrado en
-vez de escribirse a mano.
 
 ✅ **v1 terminada** y sustituida por la v2. Se jugaba en dos pestañas del mismo
 navegador, sin servidor.
 
 Este repositorio empieza por la especificación, antes que por el código:
 
-- [`docs/ESPEC-V3.md`](docs/ESPEC-V3.md) — lo que se va a construir.
-- [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — lo que está en marcha.
+- [`docs/ESPEC-V3.md`](docs/ESPEC-V3.md) — lo último construido.
+- [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — lo anterior, cuyos criterios siguen valiendo.
 - [`docs/ESPEC.md`](docs/ESPEC.md) — la v1, como registro.
 - [`CLAUDE.md`](CLAUDE.md) — reglas de trabajo dentro del repositorio.
 
@@ -35,6 +36,7 @@ Una sola dependencia, `ws`, para los WebSocket del servidor.
 npm install
 npm start     # sirve el juego y coordina las partidas en http://localhost:8000
 npm test      # todo, sin navegador y sin red de verdad
+npm run catalog  # vuelve a generar data/characters.json desde la API (rara vez)
 ```
 
 Para probarlo solo, abre dos pestañas: `sessionStorage` es propio de cada una, así que
@@ -62,9 +64,16 @@ contestan.
 
 | Capa | Qué hace |
 |---|---|
-| `src/game/` | Reglas de la partida y la vista que se le proyecta a cada jugador |
+| `src/game/` | Reglas de la partida, el catálogo de personajes y la vista de cada jugador |
 | `src/server/` | Salas, validación de lo que llega, y el servidor HTTP + WebSocket |
-| `src/client/` | Conexión, sesión de la pestaña e interfaz |
+| `src/client/` | Conexión, sesión de la pestaña, selector de personaje e interfaz |
+| `data/` | El catálogo de personajes y las correcciones a sus nombres |
+| `scripts/` | El script que genera el catálogo |
+
+El catálogo es un fichero del repositorio, no una llamada a una API: el juego no sale
+a internet mientras se juega, así que si la API se cae, la partida sigue. Volver a
+generarlo es `npm run catalog`, y las correcciones a los nombres viven aparte en
+[`data/corrections.json`](data/corrections.json) para que regenerarlo no las pierda.
 
 El personaje que te toca adivinar **no sale nunca del servidor** hasta que la partida
 termina. A diferencia de la v1, abrir las herramientas de desarrollo no sirve de nada.
@@ -76,3 +85,6 @@ abandonada caduca a los quince minutos.
 
 Proyecto de fan, sin ánimo de lucro y sin relación con los propietarios de One Piece.
 No incluye arte ni material con derechos: la estética es original.
+
+Los nombres de los personajes vienen de la API pública de
+[api-onepiece.com](https://api-onepiece.com), con algunas correcciones propias.
