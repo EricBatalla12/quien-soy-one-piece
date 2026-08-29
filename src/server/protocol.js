@@ -12,6 +12,7 @@
  * enseñar al jugador tal cual.
  */
 
+import { isCharacterId } from '../game/catalog.js';
 import { ANSWERS } from '../game/state.js';
 import { isValidCode, normalizeCode } from './rooms.js';
 
@@ -46,13 +47,13 @@ export function readMessage(raw) {
     case 'resume':
       return { type: 'resume', code: readCode(message.code), token: readToken(message.token) };
     case 'secret':
-      return { type: 'secret', text: readText(message.text, 'El personaje') };
+      return { type: 'secret', characterId: readCharacterId(message.characterId) };
     case 'ask':
       return { type: 'ask', text: readText(message.text, 'La pregunta') };
     case 'answer':
       return { type: 'answer', answer: readAnswer(message.answer) };
     case 'guess':
-      return { type: 'guess', text: readText(message.text, 'El nombre') };
+      return { type: 'guess', characterId: readCharacterId(message.characterId) };
     case 'rematch':
       return { type: 'rematch' };
     default:
@@ -83,6 +84,16 @@ function readText(value, label) {
   if (value.length > MAX_TEXT_LENGTH) throw new Error(`${label} es demasiado largo`);
 
   return value.trim();
+}
+
+/**
+ * Desde la v3 el personaje viaja como identificador. Aquí solo se mira que tenga la
+ * forma de uno; que además exista lo comprueban las reglas, que son las que tienen el
+ * catálogo delante.
+ */
+function readCharacterId(value) {
+  if (!isCharacterId(value)) throw new Error('Ese personaje no existe');
+  return value;
 }
 
 function readCode(value) {

@@ -3,12 +3,20 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { answerKey, render } from '../src/client/ui/render.js';
+import { createCatalog } from '../src/game/catalog.js';
 import { ANSWERS } from '../src/game/state.js';
 import { projectView } from '../src/game/view.js';
 import { createRoom, joinRoom, withGame } from '../src/server/rooms.js';
 import { answerQuestion, askQuestion, createGame, guess, setSecret } from '../src/game/state.js';
 
 const NOW = 1_000_000;
+
+/** Un catálogo de mentira: la interfaz no lee el del repositorio. */
+const CATALOG = createCatalog([
+  { id: 'roronoa-zoro', name: 'Roronoa Zoro' },
+  { id: 'nico-robin', name: 'Nico Robin' },
+  { id: 'sanji', name: 'Sanji' },
+]);
 
 /** La sala tal y como la vería un jugador: exactamente lo que recibe la interfaz. */
 function viewOf(game, playerId, { connected = true } = {}) {
@@ -19,12 +27,12 @@ function viewOf(game, playerId, { connected = true } = {}) {
   });
   if (!connected) room = { ...room, players: { ...room.players, 1: { ...room.players[1], connected: false } } };
 
-  return projectView(withGame(room, game, NOW), playerId);
+  return projectView(withGame(room, game, NOW), playerId, CATALOG);
 }
 
-/** El jugador 1 debe adivinar "Nico Robin"; el jugador 2, "Zoro". */
+/** El jugador 1 debe adivinar a Nico Robin; el jugador 2, a Roronoa Zoro. */
 function startedGame() {
-  return setSecret(setSecret(createGame(), 1, 'Zoro'), 2, 'Nico Robin');
+  return setSecret(setSecret(createGame(), 1, 'roronoa-zoro', CATALOG), 2, 'nico-robin', CATALOG);
 }
 
 function html(model) {
@@ -46,7 +54,7 @@ test('sin sala se piden el nombre y el código', () => {
 
 test('la sala recién creada enseña el código', () => {
   const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
-  const out = html({ view: projectView(alone, 1) });
+  const out = html({ view: projectView(alone, 1, CATALOG) });
 
   assert.match(out, /class="code">NAKAM</);
   assert.match(out, /Esperando a que entre alguien/);
@@ -76,7 +84,7 @@ test('un nombre con HTML no se ejecuta', () => {
     token: 't2',
     now: NOW,
   });
-  const out = html({ view: projectView(room, 1) });
+  const out = html({ view: projectView(room, 1, CATALOG) });
 
   assert.ok(!out.includes('<script>x</script>'));
   assert.match(out, /&lt;script&gt;/);
@@ -94,9 +102,9 @@ test('en la preparación se pide el personaje del rival', () => {
 });
 
 test('elegido el personaje, se espera al rival', () => {
-  const out = html({ view: viewOf(setSecret(createGame(), 1, 'Zoro'), 1) });
+  const out = html({ view: viewOf(setSecret(createGame(), 1, 'roronoa-zoro', CATALOG), 1) });
 
-  assert.match(out, /Zoro/);
+  assert.match(out, /Roronoa Zoro/);
   assert.match(out, /Esperando a que Nami elija/);
   assert.ok(!out.includes('id="secret-form"'), 'ya no se puede elegir dos veces');
 });
@@ -245,7 +253,7 @@ test('el historial se puede arrastrar mientras se juega', () => {
 });
 
 test('terminada la partida no hay nada que guardar', () => {
-  const finished = guess(asked(), 1, 'Nico Robin');
+  const finished = guess(asked(), 1, 'nico-robin', CATALOG);
   const out = html({ view: viewOf(finished, 1), clues: [1] });
 
   assert.ok(!out.includes('id="clue-board"'), 'el tablero ya no sirve de nada');
@@ -258,17 +266,17 @@ test('terminada la partida no hay nada que guardar', () => {
 // ---------------------------------------------------------------------------
 
 test('el final revela los dos personajes y ofrece revancha', () => {
-  const finished = guess(startedGame(), 1, 'Nico Robin');
+  const finished = guess(startedGame(), 1, 'nico-robin', CATALOG);
   const out = html({ view: viewOf(finished, 1) });
 
   assert.match(out, /¡Has ganado!/);
   assert.match(out, /Eras<\/span>\s*<strong>Nico Robin<\/strong>/);
-  assert.match(out, /Nami era<\/span>\s*<strong>Zoro<\/strong>/);
+  assert.match(out, /Nami era<\/span>\s*<strong>Roronoa Zoro<\/strong>/);
   assert.match(out, /id="rematch"/);
 });
 
 test('quien pierde lo lee con el nombre del que ganó', () => {
-  const finished = guess(startedGame(), 1, 'Nico Robin');
+  const finished = guess(startedGame(), 1, 'nico-robin', CATALOG);
   const out = html({ view: viewOf(finished, 2) });
 
   assert.match(out, /Ha ganado Eric/);

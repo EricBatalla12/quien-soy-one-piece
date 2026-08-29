@@ -19,7 +19,14 @@ import {
   setConnected,
   withGame,
 } from '../src/server/rooms.js';
+import { createCatalog } from '../src/game/catalog.js';
 import { createGame, guess, setSecret } from '../src/game/state.js';
+
+/** Un catálogo de mentira: la sala no lee el del repositorio. */
+const CATALOG = createCatalog([
+  { id: 'roronoa-zoro', name: 'Roronoa Zoro' },
+  { id: 'nico-robin', name: 'Nico Robin' },
+]);
 
 const NOW = 1_000_000;
 
@@ -32,10 +39,10 @@ function fullRoom() {
 /** Partida terminada con victoria del jugador que se indique. */
 function wonGame(winner) {
   let game = createGame();
-  game = setSecret(game, 1, 'Zoro'); // lo adivina el 2
-  game = setSecret(game, 2, 'Nico Robin'); // lo adivina el 1
+  game = setSecret(game, 1, 'roronoa-zoro', CATALOG); // lo adivina el 2
+  game = setSecret(game, 2, 'nico-robin', CATALOG); // lo adivina el 1
   if (winner === 2) game = { ...game, turn: 2 };
-  return guess(game, winner, winner === 1 ? 'Nico Robin' : 'Zoro');
+  return guess(game, winner, winner === 1 ? 'nico-robin' : 'roronoa-zoro', CATALOG);
 }
 
 // ---------------------------------------------------------------------------
@@ -230,7 +237,7 @@ test('volver a conectarse reinicia el plazo', () => {
 });
 
 test('jugar reinicia el plazo', () => {
-  const room = withGame(fullRoom(), setSecret(createGame(), 1, 'Zoro'), NOW + 5000);
+  const room = withGame(fullRoom(), setSecret(createGame(), 1, 'roronoa-zoro', CATALOG), NOW + 5000);
 
   assert.equal(room.lastActivity, NOW + 5000);
 });

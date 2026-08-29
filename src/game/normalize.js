@@ -1,9 +1,11 @@
 /**
- * Comparación tolerante de nombres de personaje.
+ * Normalización de nombres: quitar mayúsculas, acentos y espacios sobrantes.
  *
- * Como el personaje se escribe a mano (ver sección 6 de la espec), al arriesgar
- * no podemos exigir una coincidencia exacta: "ZORO", "zoro" y " Zóro " tienen que
- * valer igual. Es el criterio de aceptación 8.
+ * En la v2 servía para comparar el personaje que se arriesgaba con el que había
+ * escrito el rival. Desde la v3 el personaje se elige de un catálogo y la comparación
+ * es por identificador, así que ya no se comparan textos: lo que queda de aquí es la
+ * forma común de mirar un nombre, y la usan las dos cosas que sí lo hacen —derivar el
+ * identificador de un personaje y buscar en el catálogo (sección 6.4 de la espec v3)—.
  */
 
 /**
@@ -22,11 +24,6 @@ export function normalizeName(name) {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, ' '); // varios espacios seguidos cuentan como uno
-}
-
-/** ¿Son el mismo personaje, ignorando la forma de escribirlo? */
-export function sameName(a, b) {
-  return normalizeName(a) === normalizeName(b);
 }
 
 /** Texto vacío, solo espacios, o directamente no es texto. */

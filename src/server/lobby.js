@@ -6,7 +6,9 @@
  * la espec v2.
  *
  * Sigue sin saber nada de sockets, así que se testea sin levantar nada. El reloj, el
- * azar de los códigos y el de los tokens llegan de fuera por la misma razón.
+ * azar de los códigos, el de los tokens y el catálogo llegan de fuera por la misma
+ * razón; el catálogo, además, es lo que valida los personajes y lo que resuelve sus
+ * nombres para la vista.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -25,7 +27,14 @@ import {
 /** Intentos para dar con un código libre antes de rendirse. */
 const CODE_ATTEMPTS = 20;
 
-export function createLobby({ now = Date.now, newCode = makeCode, newToken = randomUUID } = {}) {
+export function createLobby({
+  catalog,
+  now = Date.now,
+  newCode = makeCode,
+  newToken = randomUUID,
+} = {}) {
+  if (catalog === undefined) throw new Error('El lobby necesita el catálogo de personajes');
+
   const rooms = new Map();
 
   /** La sala, o un error. Una sala caducada es una sala que ya no existe. */
@@ -77,7 +86,7 @@ export function createLobby({ now = Date.now, newCode = makeCode, newToken = ran
 
     /** Una acción de dentro de la sala. Devuelve la sala ya avanzada. */
     act(code, playerId, message) {
-      const room = applyAction(liveRoom(code), playerId, message, now());
+      const room = applyAction(liveRoom(code), playerId, message, now(), catalog);
       rooms.set(code, room);
 
       return room;
@@ -99,7 +108,7 @@ export function createLobby({ now = Date.now, newCode = makeCode, newToken = ran
 
     /** Lo que hay que enseñarle a un jugador de esta sala. */
     view(code, playerId) {
-      return projectView(liveRoom(code), playerId);
+      return projectView(liveRoom(code), playerId, catalog);
     },
 
     /**

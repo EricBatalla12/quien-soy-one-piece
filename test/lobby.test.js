@@ -1,8 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { createCatalog } from '../src/game/catalog.js';
 import { createLobby } from '../src/server/lobby.js';
 import { ROOM_TTL_MS } from '../src/server/rooms.js';
+
+/** Un catálogo de mentira: el lobby no lee el del repositorio. */
+const CATALOG = createCatalog([
+  { id: 'roronoa-zoro', name: 'Roronoa Zoro' },
+  { id: 'nico-robin', name: 'Nico Robin' },
+  { id: 'sanji', name: 'Sanji' },
+]);
 
 /**
  * Un lobby con el reloj y el azar en la mano: los códigos salen en orden y el
@@ -14,6 +22,7 @@ function fakeLobby() {
   let tokens = 0;
 
   const lobby = createLobby({
+    catalog: CATALOG,
     now: () => clock,
     newCode: () => ['NAKAM', 'ZORRO', 'SANJI'][codes++ % 3],
     newToken: () => `token-${++tokens}`,
@@ -21,6 +30,10 @@ function fakeLobby() {
 
   return { lobby, advance: (ms) => (clock += ms) };
 }
+
+test('un lobby sin catálogo no arranca: no podría validar ningún personaje', () => {
+  assert.throws(() => createLobby(), /catálogo/);
+});
 
 /** Sala con los dos jugadores dentro y sus dos tokens. */
 function seated() {
@@ -79,14 +92,14 @@ test('dos salas a la vez no comparten código', () => {
 });
 
 test('si el azar repite un código se pide otro', () => {
-  const lobby = createLobby({ newCode: sequence(['NAKAM', 'NAKAM', 'ZORRO']) });
+  const lobby = createLobby({ catalog: CATALOG, newCode: sequence(['NAKAM', 'NAKAM', 'ZORRO']) });
 
   assert.equal(lobby.open('Eric').code, 'NAKAM');
   assert.equal(lobby.open('Nami').code, 'ZORRO');
 });
 
 test('si nunca sale un código libre, crear la sala falla en vez de pisar la otra', () => {
-  const lobby = createLobby({ newCode: () => 'NAKAM' });
+  const lobby = createLobby({ catalog: CATALOG, newCode: () => 'NAKAM' });
   lobby.open('Eric');
 
   assert.throws(() => lobby.open('Nami'), /No se ha podido crear/);
@@ -99,14 +112,14 @@ test('si nunca sale un código libre, crear la sala falla en vez de pisar la otr
 
 test('con tu token recuperas tu plaza y la partida', () => {
   const { lobby, host, guest } = seated();
-  lobby.act(host.code, 1, { type: 'secret', text: 'Zoro' });
+  lobby.act(host.code, 1, { type: 'secret', characterId: 'roronoa-zoro' });
 
   lobby.leave(host.code, 1);
   assert.equal(lobby.view(host.code, 2).rival.connected, false);
 
   assert.deepEqual(lobby.resume(host.code, host.token), { code: 'NAKAM', playerId: 1 });
   assert.equal(lobby.view(guest.code, 2).rival.connected, true);
-  assert.equal(lobby.view(host.code, 1).chosenForRival, 'Zoro', 'la partida sigue ahí');
+  assert.equal(lobby.view(host.code, 1).chosenForRival, 'Roronoa Zoro', 'la partida sigue ahí');
 });
 
 test('un token que no es de esa sala no recupera nada', () => {
@@ -129,11 +142,11 @@ test('caerse no libera la plaza', () => {
 test('una partida entera pasa por el lobby', () => {
   const { lobby, host } = seated();
 
-  lobby.act(host.code, 1, { type: 'secret', text: 'Zoro' });
-  lobby.act(host.code, 2, { type: 'secret', text: 'Nico Robin' });
+  lobby.act(host.code, 1, { type: 'secret', characterId: 'roronoa-zoro' });
+  lobby.act(host.code, 2, { type: 'secret', characterId: 'nico-robin' });
   lobby.act(host.code, 1, { type: 'ask', text: '¿Eres espadachín?' });
   lobby.act(host.code, 2, { type: 'answer', answer: 'no' });
-  lobby.act(host.code, 2, { type: 'guess', text: 'zoro' });
+  lobby.act(host.code, 2, { type: 'guess', characterId: 'roronoa-zoro' });
 
   const view = lobby.view(host.code, 2);
   assert.equal(view.phase, 'finished');
@@ -147,10 +160,10 @@ test('una partida entera pasa por el lobby', () => {
 
 test('una acción rechazada no deja la sala a medias', () => {
   const { lobby, host } = seated();
-  lobby.act(host.code, 1, { type: 'secret', text: 'Zoro' });
+  lobby.act(host.code, 1, { type: 'secret', characterId: 'roronoa-zoro' });
 
-  assert.throws(() => lobby.act(host.code, 1, { type: 'secret', text: 'Sanji' }), /Ya has elegido/);
-  assert.equal(lobby.view(host.code, 1).chosenForRival, 'Zoro');
+  assert.throws(() => lobby.act(host.code, 1, { type: 'secret', characterId: 'sanji' }), /Ya has elegido/);
+  assert.equal(lobby.view(host.code, 1).chosenForRival, 'Roronoa Zoro');
 });
 
 // ---------------------------------------------------------------------------

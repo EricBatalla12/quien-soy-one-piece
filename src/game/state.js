@@ -10,7 +10,7 @@
  * de seguridad que garantiza que las reglas se cumplen aunque la interfaz falle.
  */
 
-import { isBlank, sameName } from './normalize.js';
+import { isBlank } from './normalize.js';
 
 /** Las tres respuestas posibles a una pregunta. */
 export const ANSWERS = ['sí', 'no', 'a veces'];
@@ -24,26 +24,29 @@ export function opponent(player) {
 export function createGame() {
   return {
     phase: 'setup', // 'setup' | 'playing' | 'finished'
-    secretFor: { 1: null, 2: null }, // personaje que cada jugador debe adivinar
+    secretFor: { 1: null, 2: null }, // identificador del personaje que cada uno adivina
     turn: 1,
     pendingQuestion: null, // { from, text } mientras espera respuesta
-    history: [], // { kind, from, text, answer }
+    history: [], // { kind: 'question', from, text, answer } | { kind: 'guess', from, characterId, answer }
     winner: null,
   };
 }
 
 /**
- * Un jugador escribe el personaje que su RIVAL deberá adivinar.
- * La partida arranca sola cuando los dos lo han hecho (criterio 2).
+ * Un jugador elige el personaje que su RIVAL deberá adivinar.
+ * La partida arranca sola cuando los dos lo han hecho (criterio 2 de la v2).
+ *
+ * Lo que se guarda es el identificador, no el nombre: así "Luffy" y "Monkey D. Luffy"
+ * dejan de ser dos personajes distintos (sección 1 de la espec v3).
  */
-export function setSecret(state, player, name) {
+export function setSecret(state, player, characterId, catalog) {
   if (state.phase !== 'setup') throw new Error('La preparación ya ha terminado');
-  if (isBlank(name)) throw new Error('El personaje no puede estar vacío');
+  requireCharacter(catalog, characterId);
 
   const rivalId = opponent(player);
   if (state.secretFor[rivalId] !== null) throw new Error('Ya has elegido personaje');
 
-  const secretFor = { ...state.secretFor, [rivalId]: name.trim() };
+  const secretFor = { ...state.secretFor, [rivalId]: characterId };
   const bothReady = secretFor[1] !== null && secretFor[2] !== null;
 
   return { ...state, secretFor, phase: bothReady ? 'playing' : 'setup' };
@@ -77,21 +80,32 @@ export function answerQuestion(state, player, answer) {
 }
 
 /**
- * El jugador de turno arriesga un nombre.
+ * El jugador de turno arriesga un personaje del catálogo.
  * Si acierta gana (criterio 6); si falla, cede el turno y la partida sigue (criterio 7).
+ *
+ * El acierto se decide comparando identificadores: ya no se puede fallar por escribir
+ * mal un nombre, solo por equivocarse de personaje, que es de lo que va el juego.
  */
-export function guess(state, player, name) {
+export function guess(state, player, characterId, catalog) {
   requireActivePlayer(state, player);
-  if (isBlank(name)) throw new Error('El nombre no puede estar vacío');
+  requireCharacter(catalog, characterId);
 
-  const isRight = sameName(name, state.secretFor[player]);
+  const isRight = characterId === state.secretFor[player];
   const history = [
     ...state.history,
-    { kind: 'guess', from: player, text: name.trim(), answer: isRight ? 'sí' : 'no' },
+    { kind: 'guess', from: player, characterId, answer: isRight ? 'sí' : 'no' },
   ];
 
   if (isRight) return { ...state, phase: 'finished', winner: player, history };
   return { ...state, turn: opponent(player), history };
+}
+
+/**
+ * El catálogo es cerrado y el servidor solo acepta lo que hay en él, aunque la acción
+ * llegue escrita a mano por el WebSocket (criterio 5 de la v3).
+ */
+function requireCharacter(catalog, characterId) {
+  if (!catalog.has(characterId)) throw new Error('Ese personaje no está en el catálogo');
 }
 
 /** Comprobaciones comunes a preguntar y arriesgar. */

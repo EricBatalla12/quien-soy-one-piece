@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { normalizeName, sameName, isBlank } from '../src/game/normalize.js';
+import { normalizeName, isBlank } from '../src/game/normalize.js';
 
-// Criterio de aceptación 8: al arriesgar no distinguen mayúsculas, acentos ni
+// Es la forma común de mirar un nombre: la usan el identificador de un personaje y
+// el buscador del catálogo, y ninguno de los dos distingue mayúsculas, acentos ni
 // espacios sobrantes.
 
 test('normalizar ignora las mayúsculas', () => {
@@ -22,12 +23,12 @@ test('normalizar colapsa los espacios interiores', () => {
   assert.equal(normalizeName('Monkey   D.   Luffy'), 'monkey d. luffy');
 });
 
-test('dos formas de escribir el mismo nombre son el mismo personaje', () => {
-  assert.ok(sameName('  NICO  ROBÍN ', 'nico robin'));
+test('dos formas de escribir el mismo nombre se normalizan igual', () => {
+  assert.equal(normalizeName('  NICO  ROBÍN '), normalizeName('nico robin'));
 });
 
-test('dos personajes distintos no se confunden', () => {
-  assert.ok(!sameName('Zoro', 'Sanji'));
+test('dos nombres distintos no se confunden', () => {
+  assert.notEqual(normalizeName('Zoro'), normalizeName('Sanji'));
 });
 
 test('isBlank detecta el vacío y los espacios', () => {
@@ -46,9 +47,4 @@ test('normalizar tampoco se rompe: lo que no es texto no tiene nombre', () => {
   for (const raro of [null, undefined, 42, {}, []]) {
     assert.equal(normalizeName(raro), '', `debería tratar ${JSON.stringify(raro)} como vacío`);
   }
-});
-
-test('un nombre de verdad nunca coincide con algo que no es texto', () => {
-  assert.ok(!sameName('Zoro', null));
-  assert.ok(!sameName('Zoro', 42));
 });

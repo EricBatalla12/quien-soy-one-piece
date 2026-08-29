@@ -17,6 +17,7 @@ import { join } from 'node:path';
 
 import { WebSocketServer } from 'ws';
 
+import { loadCatalog } from './catalog.js';
 import { createLobby } from './lobby.js';
 import { isEntryType, readMessage } from './protocol.js';
 import { contentType, publicPath } from './static.js';
@@ -31,7 +32,8 @@ const UPKEEP_MS = 30_000;
 export function startServer({
   port = 0,
   root = process.cwd(),
-  lobby = createLobby(),
+  catalog = loadCatalog(root),
+  lobby = createLobby({ catalog }),
   upkeepMs = UPKEEP_MS,
 } = {}) {
   const http = createServer((request, response) => serveFile(request, response, root));

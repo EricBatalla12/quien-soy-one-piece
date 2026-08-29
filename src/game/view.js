@@ -7,13 +7,16 @@
  *
  * La regla es una sola y hay un test que la vigila sobre el JSON ya serializado:
  * **el personaje que tú tienes que adivinar no sale de esta función** hasta que la
- * partida termina y ya no hay nada que proteger. El que escribiste tú sí sale: lo
- * escribiste tú.
+ * partida termina y ya no hay nada que proteger, ni como nombre ni como
+ * identificador (criterio 8 de la v3). El que elegiste tú sí sale: lo elegiste tú.
+ *
+ * Desde la v3 la partida guarda identificadores, pero aquí salen ya resueltos a
+ * nombres: el navegador pinta el historial tal cual, sin tener que cruzar nada.
  */
 
 import { opponent } from './state.js';
 
-export function projectView(room, playerId) {
+export function projectView(room, playerId, catalog) {
   const rivalId = opponent(playerId);
   const you = room.players[playerId];
   const rival = room.players[rivalId];
@@ -32,19 +35,38 @@ export function projectView(room, playerId) {
     you: { id: playerId, name: you.name },
     rival: rival === null ? null : { id: rivalId, name: rival.name, connected: rival.connected },
 
-    /** El personaje que le tocará adivinar al rival: lo escribiste tú. */
-    chosenForRival: game.secretFor[rivalId],
+    /** El personaje que le tocará adivinar al rival: lo elegiste tú. */
+    chosenForRival: catalog.nameOf(game.secretFor[rivalId]),
 
-    /** Si el rival ya escribió el tuyo. Solo eso: cuál es, no. */
+    /** Si el rival ya eligió el tuyo. Solo eso: cuál es, no. */
     rivalHasChosen: game.secretFor[playerId] !== null,
 
     /** Quién eras. Se revela al terminar y ni un momento antes. */
-    yourCharacter: isOver ? game.secretFor[playerId] : null,
+    yourCharacter: isOver ? catalog.nameOf(game.secretFor[playerId]) : null,
 
     turn: game.turn,
     pendingQuestion: game.pendingQuestion,
-    history: game.history,
+    history: game.history.map((entry) => showEntry(entry, catalog)),
     winner: isOver ? game.winner : null,
     score: room.score,
+  };
+}
+
+/**
+ * Una entrada del historial como se enseña.
+ *
+ * Las preguntas ya son texto. Los intentos guardan el identificador de lo que se
+ * arriesgó, y aquí se cambia por el nombre: el identificador no le sirve de nada al
+ * navegador y no tiene por qué viajar. Un personaje que ya no esté en el catálogo
+ * —porque se regeneró a mitad de partida— se enseña como lo que es: un desconocido.
+ */
+function showEntry(entry, catalog) {
+  if (entry.kind !== 'guess') return entry;
+
+  return {
+    kind: 'guess',
+    from: entry.from,
+    text: catalog.nameOf(entry.characterId) ?? 'un personaje que ya no está',
+    answer: entry.answer,
   };
 }

@@ -6,6 +6,7 @@ import { WebSocket } from 'ws';
 
 import { startServer } from '../src/server/server.js';
 import { createLobby } from '../src/server/lobby.js';
+import { loadCatalog } from '../src/server/catalog.js';
 import { ROOM_TTL_MS } from '../src/server/rooms.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -87,8 +88,8 @@ async function playing() {
   guest.send({ type: 'join', code: seated.code, name: 'Nami' });
   await guest.next('seated');
 
-  host.send({ type: 'secret', text: 'Zoro' }); // lo adivina Nami
-  guest.send({ type: 'secret', text: 'Nico Robin' }); // lo adivina Eric
+  host.send({ type: 'secret', characterId: 'roronoa-zoro' }); // lo adivina Nami
+  guest.send({ type: 'secret', characterId: 'nico-robin' }); // lo adivina Eric
 
   await host.next('view', (m) => m.view.phase === 'playing');
   await guest.next('view', (m) => m.view.phase === 'playing');
@@ -134,10 +135,10 @@ test('dos jugadores juegan una partida entera y piden la revancha', async () => 
   assert.equal(answered.view.history[0].answer, 'a veces');
   assert.equal(answered.view.turn, 2, 'responder da el turno');
 
-  guest.send({ type: 'guess', text: '  zORo ' });
+  guest.send({ type: 'guess', characterId: 'roronoa-zoro' });
   const won = await guest.next('view', (m) => m.view.phase === 'finished');
   assert.equal(won.view.winner, 2);
-  assert.equal(won.view.yourCharacter, 'Zoro', 'al terminar se revela');
+  assert.equal(won.view.yourCharacter, 'Roronoa Zoro', 'al terminar se revela, con su nombre');
   assert.deepEqual(won.view.score, { 1: 0, 2: 1 });
 
   host.send({ type: 'rematch' });
@@ -149,7 +150,8 @@ test('dos jugadores juegan una partida entera y piden la revancha', async () => 
 });
 
 // ---------------------------------------------------------------------------
-// Criterio 5: el secreto no viaja
+// Criterio 5 de la v2 y 8 de la v3: el secreto no viaja, ni como nombre ni como
+// identificador
 // ---------------------------------------------------------------------------
 
 test('el personaje que debes adivinar no llega nunca a tu navegador', async () => {
@@ -159,15 +161,51 @@ test('el personaje que debes adivinar no llega nunca a tu navegador', async () =
   await guest.next('view', (m) => m.view.pendingQuestion !== null);
   guest.send({ type: 'answer', answer: 'no' });
   await host.next('view', (m) => m.view.history.length === 1);
-  guest.send({ type: 'guess', text: 'Sanji' });
+  guest.send({ type: 'guess', characterId: 'sanji' });
   await host.next('view', (m) => m.view.history.length === 2);
 
-  assert.ok(!host.wire().includes('Nico Robin'), 'Eric no puede ver quién es');
-  assert.ok(!guest.wire().includes('Zoro'), 'Nami no puede ver quién es');
-  assert.ok(host.wire().includes('Zoro'), 'pero sí el personaje que escribió él');
+  for (const rastro of ['Nico Robin', 'nico-robin']) {
+    assert.ok(!host.wire().includes(rastro), `Eric no puede ver "${rastro}"`);
+  }
+  for (const rastro of ['Roronoa Zoro', 'roronoa-zoro']) {
+    assert.ok(!guest.wire().includes(rastro), `Nami no puede ver "${rastro}"`);
+  }
+  assert.ok(host.wire().includes('Roronoa Zoro'), 'pero sí el personaje que eligió él');
+
+  // El historial enseña nombres, no identificadores (criterio 7 de la v3).
+  assert.ok(host.wire().includes('Sanji'));
+  assert.ok(!host.wire().includes('"sanji"'));
 
   host.close();
   guest.close();
+});
+
+// Criterio 5 de la v3: el catálogo lo hace cumplir el servidor, no la interfaz.
+test('un personaje que no está en el catálogo se rechaza aunque se mande a mano', async () => {
+  const { host, guest } = await playing();
+
+  // Le toca al anfitrión, así que el único reparo posible es el catálogo.
+  host.send({ type: 'guess', characterId: 'pepito-grillo' });
+  assert.match((await host.next('error')).message, /no está en el catálogo/);
+
+  // Y un personaje escrito a mano, como en la v2, ya no tiene ni forma de acción.
+  host.send({ type: 'guess', text: 'Roronoa Zoro' });
+  assert.match((await host.next('error')).message, /personaje no existe/);
+
+  host.close();
+  guest.close();
+});
+
+// Criterio 9 de la v3: el catálogo se sirve como fichero estático.
+test('el navegador puede pedir el catálogo por HTTP', async () => {
+  const response = await fetch(`http://localhost:${port}/data/characters.json`);
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /application\/json/);
+
+  const catalog = await response.json();
+  assert.ok(catalog.length > 100, `solo trae ${catalog.length} personajes`);
+  assert.ok(catalog.some((entry) => entry.id === 'monkey-d-luffy'));
 });
 
 // ---------------------------------------------------------------------------
@@ -245,7 +283,7 @@ test('el rival ve la caída, y la vuelta', async () => {
 
   const resumed = await back.next('view', (m) => m.view.phase === 'playing');
   assert.equal(resumed.view.you.id, 1);
-  assert.equal(resumed.view.chosenForRival, 'Zoro', 'la partida sigue donde estaba');
+  assert.equal(resumed.view.chosenForRival, 'Roronoa Zoro', 'la partida sigue donde estaba');
   await guest.next('view', (m) => m.view.rival.connected === true);
 
   back.close();
@@ -276,7 +314,7 @@ test('una sala abandonada caduca y echa a quien quedaba', async () => {
   const impatient = startServer({
     port: 0,
     root,
-    lobby: createLobby({ now: () => clock }),
+    lobby: createLobby({ catalog: loadCatalog(root), now: () => clock }),
     upkeepMs: 20,
   });
   const impatientPort = await impatient.listen();

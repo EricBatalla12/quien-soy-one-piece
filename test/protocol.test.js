@@ -43,9 +43,35 @@ test('una acción inventada se rechaza', () => {
 
 test('los textos vacíos no pasan, y el error dice cuál', () => {
   assert.throws(() => readMessage(wire({ type: 'ask', text: '   ' })), /pregunta no puede/);
-  assert.throws(() => readMessage(wire({ type: 'secret', text: '' })), /personaje no puede/);
-  assert.throws(() => readMessage(wire({ type: 'guess', text: null })), /nombre no puede/);
   assert.throws(() => readMessage(wire({ type: 'create', name: 42 })), /nombre no puede/);
+});
+
+// Criterio 5 de la v3: el personaje viaja como identificador, y aquí se mira que al
+// menos tenga esa forma. Que además exista lo comprueban las reglas.
+test('el personaje viaja como identificador y sale tal cual', () => {
+  for (const type of ['secret', 'guess']) {
+    assert.deepEqual(readMessage(wire({ type, characterId: 'monkey-d-luffy' })), {
+      type,
+      characterId: 'monkey-d-luffy',
+    });
+  }
+});
+
+test('lo que no tiene forma de identificador de personaje no pasa', () => {
+  for (const bad of ['', 'Monkey D. Luffy', 'monkey d luffy', '-luffy', 42, null, undefined]) {
+    for (const type of ['secret', 'guess']) {
+      assert.throws(
+        () => readMessage(wire({ type, characterId: bad })),
+        /personaje no existe/,
+        `${type} con ${JSON.stringify(bad)} debería fallar`,
+      );
+    }
+  }
+});
+
+test('el personaje ya no se manda como texto libre', () => {
+  assert.throws(() => readMessage(wire({ type: 'secret', text: 'Roronoa Zoro' })), /personaje/);
+  assert.throws(() => readMessage(wire({ type: 'guess', text: 'Roronoa Zoro' })), /personaje/);
 });
 
 test('un texto enorme no pasa', () => {
