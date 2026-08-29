@@ -5,7 +5,13 @@
  * debía adivinar, porque la pestaña lo tenía delante. Ahora no está: la vista que
  * llega no lo trae hasta que la partida termina (ver `src/game/view.js`). Este
  * fichero ya no puede filtrar nada aunque se equivoque.
+ *
+ * Desde la v3 pinta también el selector de personaje. Buscar es cosa del catálogo y
+ * llevar la cuenta de lo elegido es cosa de `picker.js`: aquí solo se dibuja lo que
+ * los dos digan.
  */
+
+import { highlightIndex, isChosen } from '../picker.js';
 
 /**
  * Clave con la que cada respuesta se pinta de un color.
@@ -48,12 +54,17 @@ const EMBLEM = `
   </svg>
 `;
 
+/** Un selector en blanco, para no obligar a quien solo quiere pintar una pantalla. */
+const EMPTY_PICKER = { query: '', chosenId: null, highlight: 0 };
+
 /**
  * `view` es null mientras no estés en ninguna sala: entonces se pide el nombre.
  * `status` es cómo está la conexión: 'connecting', 'online' u 'offline'.
  * `clues` son las preguntas que has guardado en tu tablero, en tu orden.
+ * `catalog` es la lista de personajes, o null mientras se está descargando.
+ * `picker` es qué has escrito y qué has elegido en el selector.
  */
-export function render({ view, status, error, clues = [] }) {
+export function render({ view, status, error, clues = [], catalog = null, picker = EMPTY_PICKER }) {
   return `
     <header>
       ${EMBLEM}
@@ -62,7 +73,7 @@ export function render({ view, status, error, clues = [] }) {
     </header>
     ${connectionNotice(status)}
     ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
-    ${view === null ? entryScreen() : roomScreen(view, clues)}
+    ${view === null ? entryScreen() : roomScreen(view, { clues, catalog, picker })}
   `;
 }
 
@@ -113,14 +124,14 @@ function entryScreen() {
   `;
 }
 
-function roomScreen(view, clues) {
+function roomScreen(view, { clues, catalog, picker }) {
   const screen =
     view.phase === 'waiting'
       ? waitingScreen(view)
       : view.phase === 'setup'
-        ? setupScreen(view)
+        ? setupScreen(view, catalog, picker)
         : view.phase === 'playing'
-          ? boardScreen(view, clues)
+          ? boardScreen(view, clues, catalog, picker)
           : endScreen(view);
 
   return `${rivalNotice(view)}${screen}`;
@@ -146,7 +157,7 @@ function waitingScreen(view) {
   `;
 }
 
-function setupScreen(view) {
+function setupScreen(view, catalog, picker) {
   const rival = escapeHtml(view.rival.name);
 
   if (view.chosenForRival !== null) {
@@ -162,19 +173,18 @@ function setupScreen(view) {
     <section>
       <h2>Elige el personaje de ${rival}</h2>
       <p>
-        Escribe el personaje que ${rival} tendrá que adivinar.
+        Busca el personaje que ${rival} tendrá que adivinar y púlsalo.
         ${view.rivalHasChosen ? 'El tuyo ya está elegido.' : ''}
       </p>
       <form id="secret-form">
-        <input id="secret-input" name="text" type="text" autocomplete="off" maxlength="200"
-          placeholder="Roronoa Zoro" required />
-        <button type="submit">Listo</button>
+        ${characterPicker('secret', catalog, picker, 'Busca un personaje…')}
+        ${submitButton('Listo', picker)}
       </form>
     </section>
   `;
 }
 
-function boardScreen(view, clues) {
+function boardScreen(view, clues, catalog, picker) {
   const rival = escapeHtml(view.rival.name);
   const pending = view.pendingQuestion;
 
@@ -205,9 +215,8 @@ function boardScreen(view, clues) {
         </form>
         <p class="or">o arriésgate</p>
         <form id="guess-form">
-          <input id="guess-input" name="text" type="text" autocomplete="off" maxlength="200"
-            placeholder="Creo que soy…" required />
-          <button type="submit">Adivinar</button>
+          ${characterPicker('guess', catalog, picker, 'Creo que soy…')}
+          ${submitButton('Adivinar', picker)}
         </form>
       </section>
     `;
@@ -251,6 +260,88 @@ function endScreen(view) {
       <button type="button" id="rematch">Otra partida</button>
     </section>
   `;
+}
+
+/**
+ * El selector de personaje: un buscador con sus resultados, o lo ya elegido.
+ *
+ * La lista de resultados se pinta entera en cada tecla, así que no puede ser la
+ * lista entera: el catálogo devuelve como mucho treinta y cuenta las que se deja
+ * (criterio 4). Con el campo vacío no hay lista, solo la invitación a escribir.
+ *
+ * Los atributos `role` y `aria-*` son los de un combobox de manual: sin ellos, quien
+ * navegue con lector de pantalla oiría un campo de texto normal y no se enteraría de
+ * que debajo hay resultados ni de cuál está señalada (criterio 13).
+ */
+function characterPicker(name, catalog, picker, placeholder) {
+  if (catalog === null) return `<p class="waiting">Cargando los personajes…</p>`;
+  if (catalog.size === 0) {
+    return `<p class="notice">
+      No se ha podido cargar la lista de personajes. Recarga la página para pedirla otra vez.
+    </p>`;
+  }
+
+  const chosenName = picker.chosenId === null ? null : catalog.nameOf(picker.chosenId);
+  if (chosenName !== null) {
+    return `
+      <p class="picked">
+        <span class="label">Has elegido</span>
+        <strong>${escapeHtml(chosenName)}</strong>
+        <button type="button" class="unpick" data-unpick="${name}">Cambiar</button>
+      </p>
+    `;
+  }
+
+  const { matches, total, hidden } = catalog.search(picker.query);
+  const active = highlightIndex(picker, matches.length);
+
+  const options = matches
+    .map(
+      (entry, index) => `<li class="result${index === active ? ' on' : ''}"
+        id="${name}-option-${index}" role="option" aria-selected="${index === active}"
+        data-pick="${escapeHtml(entry.id)}">${escapeHtml(entry.name)}</li>`,
+    )
+    .join('');
+
+  const note = resultsNote(picker.query, total, hidden);
+
+  return `
+    <div class="picker">
+      <input id="${name}-search" class="search" type="text" autocomplete="off" maxlength="60"
+        role="combobox" aria-autocomplete="list" aria-expanded="${matches.length > 0}"
+        aria-controls="${name}-results"
+        ${active === -1 ? '' : `aria-activedescendant="${name}-option-${active}"`}
+        placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(picker.query)}" />
+      ${
+        options === '' && note === ''
+          ? `<ul id="${name}-results" class="sr-only" role="listbox" aria-label="Personajes"></ul>`
+          : `<div class="results">
+              <ul id="${name}-results" class="options" role="listbox"
+                aria-label="Personajes">${options}</ul>
+              ${note}
+            </div>`
+      }
+    </div>
+  `;
+}
+
+/**
+ * Cuántas coincidencias se han quedado fuera, o que no hay ninguna.
+ *
+ * Con el campo vacío no dice nada: todavía no se ha buscado, así que no hay nada que
+ * contar. Es el "solo invita a escribir" de la sección 6.4 de la espec.
+ */
+function resultsNote(query, total, hidden) {
+  if (query.trim() === '') return '';
+  if (total === 0) return `<p class="results-note">Ningún personaje se llama así.</p>`;
+  if (hidden === 0) return '';
+
+  return `<p class="results-note">Y ${hidden} más: escribe un poco más para verlas.</p>`;
+}
+
+/** Sin personaje elegido no se puede confirmar (criterio 1). */
+function submitButton(label, picker) {
+  return `<button type="submit"${isChosen(picker) ? '' : ' disabled'}>${label}</button>`;
 }
 
 /**

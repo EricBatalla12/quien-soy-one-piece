@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   chosen,
   highlighted,
+  highlightIndex,
   isChosen,
   moveHighlight,
   noPicker,
@@ -67,6 +68,12 @@ test('no se sale de la lista por ninguno de los dos extremos', () => {
 test('sin resultados no hay ninguna señalada', () => {
   assert.equal(highlighted(noPicker(), []), null);
   assert.equal(highlighted(moveHighlight(noPicker(), 1, 0), []), null);
+  assert.equal(highlightIndex(noPicker(), 0), -1);
+});
+
+test('la posición de la señal es la que se le dice al lector de pantalla', () => {
+  assert.equal(highlightIndex(moveHighlight(searching('monkey'), 1, 3), 3), 1);
+  assert.equal(highlightIndex(moveHighlight(searching('monkey'), 9, 3), 3), 2);
 });
 
 test('la señalada se recorta contra los resultados de ahora, no los de antes', () => {

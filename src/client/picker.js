@@ -46,15 +46,21 @@ export function moveHighlight(picker, step, count) {
 }
 
 /**
- * Cuál está señalada ahora mismo, o `null` si no hay resultados.
+ * En qué posición está la señal, o -1 si no hay resultados.
  *
  * Se recorta contra los resultados de este momento porque la lista cambia con cada
  * tecla: lo que era el cuarto resultado deja de existir en cuanto se escribe una
- * letra más.
+ * letra más. La interfaz necesita el número, no solo el personaje, para decirle al
+ * lector de pantalla cuál está señalada.
  */
+export function highlightIndex(picker, count) {
+  return count <= 0 ? -1 : clamp(picker.highlight, count);
+}
+
+/** Cuál está señalada ahora mismo, o `null` si no hay resultados. */
 export function highlighted(picker, matches) {
-  if (matches.length === 0) return null;
-  return matches[clamp(picker.highlight, matches.length)];
+  const index = highlightIndex(picker, matches.length);
+  return index === -1 ? null : matches[index];
 }
 
 function clamp(index, count) {

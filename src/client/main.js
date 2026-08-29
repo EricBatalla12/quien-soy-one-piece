@@ -9,7 +9,9 @@
  */
 
 import { initialModel, reconnected, receive, sending, withStatus } from './app.js';
+import { createCatalog } from '../game/catalog.js';
 import { isPinned, moveClue, noClues, pinClue, unpinClue } from './clues.js';
+import { chosen, highlighted, moveHighlight, noPicker, searching } from './picker.js';
 import { trackDragging } from './ui/drag.js';
 import { connect, socketUrl } from './sync/connection.js';
 import { nextScrollTop } from './ui/scroll.js';
@@ -25,7 +27,20 @@ import { render } from './ui/render.js';
 
 const app = document.getElementById('app');
 
+/** Por HTTP y una sola vez, no por el WebSocket (sección 6.3 de la espec v3). */
+const CATALOG_URL = 'data/characters.json';
+
 let model = initialModel();
+
+/**
+ * El catálogo de personajes: `null` mientras se descarga, y un catálogo vacío si no
+ * se ha podido. Vive aquí y no en el modelo porque no viene del servidor de partidas
+ * ni cambia durante el juego: se pide al arrancar y ya está.
+ */
+let catalog = null;
+
+/** Qué has escrito y qué has elegido en el selector de personaje. */
+let picker = noPicker();
 
 /**
  * Tu tablero de pistas. Vive aquí y no en el modelo porque no viene del servidor ni
@@ -57,6 +72,28 @@ const connection = connect({
 });
 
 paint();
+loadCatalog();
+
+/**
+ * El catálogo, del servidor web y no del de partidas.
+ *
+ * Si falla, el juego sigue funcionando en todo lo demás —se puede crear sala, entrar
+ * y ver el historial— y el selector dice que no ha podido cargarse. Un catálogo
+ * vacío es justo eso: no hay a quién elegir.
+ */
+async function loadCatalog() {
+  try {
+    const response = await fetch(CATALOG_URL);
+    if (!response.ok) throw new Error(`el servidor ha contestado ${response.status}`);
+
+    catalog = createCatalog(await response.json());
+  } catch (cause) {
+    console.error('No se ha podido cargar el catálogo de personajes:', cause);
+    catalog = createCatalog([]);
+  }
+
+  paint();
+}
 
 /**
  * Nada más abrir el socket, y también después de cada reconexión, se presenta el
@@ -123,7 +160,7 @@ function paint() {
   const typed = captureTyping();
   const scrolled = captureScroll();
 
-  app.innerHTML = render({ ...model, clues });
+  app.innerHTML = render({ ...model, clues, catalog, picker });
 
   restoreTyping(typed);
   restoreScroll(scrolled);
@@ -154,12 +191,17 @@ function restoreScroll(before) {
  * Repintamos la pantalla entera con cada mensaje del servidor. En la preparación los
  * dos jugadores escriben a la vez, así que sin esto el mensaje del rival te borraría
  * el texto a medio escribir y te quitaría el foco.
+ *
+ * El buscador del selector se queda fuera: lo que has escrito en él vive en `picker`
+ * y lo vuelve a pintar `render`, así que copiarle encima el texto de antes
+ * resucitaría justo lo que acabas de borrar con Escape. El foco y el cursor sí se le
+ * devuelven, como a cualquier otro campo.
  */
 function captureTyping() {
   const active = document.activeElement;
   const values = new Map();
 
-  for (const input of app.querySelectorAll('input[type="text"]')) {
+  for (const input of app.querySelectorAll('input[type="text"]:not(.search)')) {
     if (input.value !== '') values.set(input.id, input.value);
   }
 
@@ -188,6 +230,10 @@ app.addEventListener('submit', (event) => {
 
   const text = new FormData(event.target).get('text');
 
+  // El personaje ya no se lee del formulario: es el que se haya elegido en el
+  // selector, y sin uno elegido el botón está deshabilitado (criterio 1 de la v3).
+  const characterId = picker.chosenId;
+
   switch (event.target.id) {
     // El nombre se escribe una sola vez y vale para crear y para entrar, así que se
     // lee del campo y no del formulario que se acaba de enviar.
@@ -199,25 +245,101 @@ app.addEventListener('submit', (event) => {
       break;
 
     case 'secret-form':
-      send({ type: 'secret', text });
+      if (characterId !== null) sendCharacter('secret', characterId);
       break;
     case 'question-form':
       send({ type: 'ask', text });
       break;
     case 'guess-form':
-      send({ type: 'guess', text });
+      if (characterId !== null) sendCharacter('guess', characterId);
       break;
   }
 });
 
+/** Manda el personaje elegido y deja el selector en blanco para la próxima vez. */
+function sendCharacter(type, characterId) {
+  picker = noPicker();
+  send({ type, characterId });
+}
+
+/**
+ * Escribir en el buscador.
+ *
+ * La pantalla se rehace entera con cada tecla, como con cualquier otro cambio; el
+ * texto y el cursor los devuelve a su sitio `restoreTyping`, que ya estaba para que
+ * el rival no te borrara lo que estabas escribiendo.
+ */
+app.addEventListener('input', (event) => {
+  if (!isSearchField(event.target)) return;
+
+  picker = searching(event.target.value);
+  paint();
+});
+
+/**
+ * El selector con el teclado (criterio 13 de la v3): se baja por los resultados con
+ * las flechas y se elige con Intro, sin tocar el ratón.
+ */
+app.addEventListener('keydown', (event) => {
+  if (!isSearchField(event.target)) return;
+
+  const matches = catalog === null ? [] : catalog.search(picker.query).matches;
+
+  switch (event.key) {
+    case 'ArrowDown':
+    case 'ArrowUp':
+      event.preventDefault();
+      picker = moveHighlight(picker, event.key === 'ArrowDown' ? 1 : -1, matches.length);
+      break;
+
+    // Intro elige la señalada; si no hay ninguna, no envía el formulario a medias.
+    case 'Enter': {
+      event.preventDefault();
+      const pick = highlighted(picker, matches);
+      if (pick === null) return;
+
+      picker = chosen(pick.id);
+      break;
+    }
+
+    case 'Escape':
+      picker = noPicker();
+      break;
+
+    default:
+      return;
+  }
+
+  paint();
+});
+
+function isSearchField(element) {
+  return element instanceof HTMLInputElement && element.classList.contains('search');
+}
+
 app.addEventListener('click', (event) => {
+  // Un resultado del buscador se elige pulsándolo; no es un botón, es una opción.
+  const option = event.target.closest('[data-pick]');
+  if (option !== null) {
+    picker = chosen(option.dataset.pick);
+    paint();
+    return;
+  }
+
   const button = event.target.closest('button');
   if (button === null) return;
 
-  const { answer, pin, move } = button.dataset;
+  const { answer, pin, move, unpick } = button.dataset;
 
   if (answer !== undefined) {
     send({ type: 'answer', answer });
+    return;
+  }
+
+  // "Cambiar": vuelve a dejar el buscador en blanco para elegir otro.
+  if (unpick !== undefined) {
+    picker = noPicker();
+    paint();
     return;
   }
 

@@ -516,6 +516,130 @@ blockquote {
   }
 }
 
+/* --- El selector de personaje ------------------------------------------- */
+
+/*
+ * El buscador y sus resultados ocupan el sitio del campo de texto que había antes,
+ * y la lista cuelga por encima de lo que venga debajo en vez de empujarlo: si
+ * empujara, el botón de confirmar se movería con cada tecla y se acabaría pulsando
+ * lo que no es.
+ */
+.picker {
+  position: relative;
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.picker .search {
+  width: 100%;
+}
+
+.results {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  right: 0;
+
+  max-height: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  background: var(--parchment);
+  border: 2px solid rgba(109, 86, 55, 0.45);
+  border-radius: 9px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
+.options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result {
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+}
+
+.result + .result {
+  border-top: 1px solid rgba(109, 86, 55, 0.18);
+}
+
+/* La señalada con el teclado y la que está bajo el ratón se pintan igual: es la
+   misma idea, "esta es la que se elegiría ahora". */
+.result:hover,
+.result.on {
+  background: rgba(217, 159, 40, 0.28);
+}
+
+.results-note {
+  margin: 0;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--ink-soft);
+  background: rgba(109, 86, 55, 0.08);
+}
+
+/* El personaje ya elegido, en el sitio donde estaba el buscador. */
+.picked {
+  flex: 1 1 14rem;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(109, 86, 55, 0.4);
+  border-radius: 7px;
+}
+
+.picked .label {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.picked strong {
+  font-size: 1.05rem;
+}
+
+/* "Cambiar" no compite con el botón de confirmar: es de papel, no de oro. */
+.picked .unpick {
+  margin-left: auto;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid rgba(109, 86, 55, 0.4);
+  box-shadow: none;
+}
+
+.picked .unpick:hover {
+  background: rgba(109, 86, 55, 0.12);
+}
+
+/* Sin personaje elegido no hay nada que confirmar, y el botón lo dice. */
+form button[type='submit']:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/*
+ * En un móvil la lista se queda pegada al buscador y ocupa lo que le hace falta,
+ * pero sin comerse la pantalla entera: se sigue viendo dónde se está escribiendo.
+ */
+@media (max-width: 30rem) {
+  .results {
+    max-height: 11rem;
+  }
+}
+
 /* --- El tablero de pistas ----------------------------------------------- */
 
 .clues {

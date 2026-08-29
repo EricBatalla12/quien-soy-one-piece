@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import { answerKey, render } from '../src/client/ui/render.js';
 import { createCatalog } from '../src/game/catalog.js';
+import { chosen, moveHighlight, noPicker, searching } from '../src/client/picker.js';
 import { ANSWERS } from '../src/game/state.js';
 import { projectView } from '../src/game/view.js';
 import { createRoom, joinRoom, withGame } from '../src/server/rooms.js';
@@ -36,7 +37,7 @@ function startedGame() {
 }
 
 function html(model) {
-  return render({ status: 'online', error: null, ...model });
+  return render({ status: 'online', error: null, catalog: CATALOG, picker: noPicker(), ...model });
 }
 
 // ---------------------------------------------------------------------------
@@ -94,10 +95,11 @@ test('un nombre con HTML no se ejecuta', () => {
 // Preparación y tablero
 // ---------------------------------------------------------------------------
 
-test('en la preparación se pide el personaje del rival', () => {
+test('en la preparación se busca el personaje del rival en la lista', () => {
   const out = html({ view: viewOf(createGame(), 1) });
 
   assert.match(out, /id="secret-form"/);
+  assert.match(out, /id="secret-search"/);
   assert.match(out, /Elige el personaje de Nami/);
 });
 
@@ -114,6 +116,103 @@ test('en tu turno puedes preguntar o arriesgar', () => {
 
   assert.match(out, /id="question-form"/);
   assert.match(out, /id="guess-form"/);
+});
+
+// ---------------------------------------------------------------------------
+// El selector de personaje (criterios 1, 2, 4 y 13 de la v3)
+// ---------------------------------------------------------------------------
+
+/** La pantalla de preparación con el selector en un estado concreto. */
+function picking(picker, catalog = CATALOG) {
+  return html({ view: viewOf(createGame(), 1), picker, catalog });
+}
+
+test('se elige de la misma lista en la preparación y al arriesgar', () => {
+  const setup = picking(searching('robin'));
+  const board = html({ view: viewOf(startedGame(), 1), picker: searching('robin') });
+
+  assert.match(setup, /id="secret-search"/);
+  assert.match(setup, /data-pick="nico-robin"/);
+  assert.match(board, /id="guess-search"/);
+  assert.match(board, /data-pick="nico-robin"/);
+});
+
+test('con el campo vacío no se enseña ningún personaje', () => {
+  const out = picking(noPicker());
+
+  assert.ok(!out.includes('data-pick='), 'la lista entera no es una respuesta');
+  assert.ok(!out.includes('class="results"'));
+});
+
+test('lo escrito sigue en el campo después de repintar', () => {
+  assert.match(picking(searching('rob')), /id="secret-search"[^>]*value="rob"/s);
+});
+
+test('sin personaje elegido no se puede confirmar', () => {
+  assert.match(picking(searching('rob')), /<button type="submit" disabled>Listo<\/button>/);
+});
+
+// Criterio 1: elegido uno, se puede confirmar, y se ve cuál es.
+test('elegido un personaje se ve su nombre y el botón se activa', () => {
+  const out = picking(chosen('nico-robin'));
+
+  assert.match(out, /class="picked"/);
+  assert.match(out, /<strong>Nico Robin<\/strong>/);
+  assert.match(out, /<button type="submit">Listo<\/button>/);
+  assert.match(out, /data-unpick="secret"/, 'y se puede cambiar');
+  assert.ok(!out.includes('id="secret-search"'), 'el buscador ya no hace falta');
+});
+
+// Criterio 4: como mucho treinta, y avisa de cuántas faltan.
+test('el selector no enseña más de treinta y dice cuántas se deja', () => {
+  const many = createCatalog(
+    Array.from({ length: 40 }, (_, i) => ({ id: `pirata-${i}`, name: `Pirata ${i}` })),
+  );
+  const out = picking(searching('pirata'), many);
+
+  assert.equal(out.match(/data-pick=/g).length, 30);
+  assert.match(out, /Y 10 más/);
+});
+
+test('si no hay ningún personaje que se llame así, se dice', () => {
+  const out = picking(searching('pepito'));
+
+  assert.match(out, /Ningún personaje se llama así/);
+  assert.ok(!out.includes('data-pick='));
+});
+
+// Criterio 13: se puede usar con el teclado, y el lector de pantalla se entera.
+test('el selector dice cuál está señalada, para poder bajar con el teclado', () => {
+  const out = picking(moveHighlight(searching('o'), 1, 3));
+
+  assert.match(out, /role="combobox"/);
+  assert.match(out, /aria-expanded="true"/);
+  assert.match(out, /aria-controls="secret-results"/);
+  assert.match(out, /aria-activedescendant="secret-option-1"/);
+  assert.match(out, /id="secret-option-1" role="option" aria-selected="true"/);
+  assert.match(out, /class="result on"/);
+});
+
+test('mientras el catálogo se descarga no se ofrece elegir a nadie', () => {
+  const out = picking(noPicker(), null);
+
+  assert.match(out, /Cargando los personajes/);
+  assert.ok(!out.includes('id="secret-search"'));
+  assert.match(out, /<button type="submit" disabled>/);
+});
+
+test('si el catálogo no se ha podido cargar, se dice y no se puede confirmar', () => {
+  const out = picking(noPicker(), createCatalog([]));
+
+  assert.match(out, /No se ha podido cargar la lista de personajes/);
+  assert.match(out, /<button type="submit" disabled>/);
+});
+
+test('un personaje elegido que no está en el catálogo no se da por bueno', () => {
+  const out = picking(chosen('pepito-grillo'));
+
+  assert.ok(!out.includes('class="picked"'));
+  assert.match(out, /id="secret-search"/);
 });
 
 test('fuera de tu turno no hay con qué actuar', () => {
@@ -315,6 +414,15 @@ test('cada respuesta del juego tiene su color en el CSS', () => {
     const key = answerKey(answer);
     assert.notEqual(key, 'unknown', `"${answer}" no tiene clave de color`);
     assert.match(css, new RegExp(`\\[data-value='${key}'\\]`), `el CSS no pinta "${key}"`);
+  }
+});
+
+test('las clases nuevas de la v3 existen en el CSS', () => {
+  const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
+
+  for (const selector of ['.picker', '.search', '.results', '.options', '.result',
+    '.results-note', '.picked', '.unpick']) {
+    assert.match(css, new RegExp(`\\${selector}[\\s,:{]`), `falta ${selector} en el CSS`);
   }
 });
 
