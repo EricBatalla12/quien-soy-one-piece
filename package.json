@@ -7,7 +7,8 @@
   "scripts": {
     "test": "node --test",
     "start": "node src/server/start.js",
-    "dev": "node src/server/start.js"
+    "dev": "node src/server/start.js",
+    "catalog": "node scripts/build-catalog.js"
   },
   "engines": {
     "node": ">=20"
