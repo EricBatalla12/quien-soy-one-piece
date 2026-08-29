@@ -18,6 +18,15 @@ import { normalizeName } from './normalize.js';
  */
 export const MAX_ID_LENGTH = 100;
 
+/**
+ * Cuántas coincidencias se enseñan como mucho (criterio 4 de la v3).
+ *
+ * Con casi ochocientos personajes, pintar la lista entera en cada tecla es tirar
+ * trabajo, y una lista de ochocientos nombres tampoco se lee. Las que no caben se
+ * cuentan, para que quien busca sepa que hay más y afine.
+ */
+export const MAX_RESULTS = 30;
+
 /** Un identificador bien formado: minúsculas, cifras y guiones que separan. */
 const ID_SHAPE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -114,6 +123,33 @@ export function createCatalog(entries) {
     /** El nombre que se enseña, o `null` si no es ningún personaje. */
     nameOf(id) {
       return byId.get(id)?.name ?? null;
+    },
+
+    /**
+     * Los personajes cuyo nombre contiene lo que se ha escrito.
+     *
+     * Busca dentro del nombre entero y con la normalización de siempre, así que
+     * encuentra igual con o sin mayúsculas y con o sin acentos (criterio 3), y
+     * escribir "big mom" encuentra a "Charlotte Linlin / Big Mom".
+     *
+     * Con el campo vacío no devuelve nada: la lista entera no es una respuesta.
+     * `hidden` son las coincidencias que no caben en el tope.
+     */
+    search(query, limit = MAX_RESULTS) {
+      const wanted = normalizeName(query);
+      if (wanted === '') return { matches: [], total: 0, hidden: 0 };
+
+      const matches = [];
+      let total = 0;
+
+      for (const entry of list) {
+        if (!normalizeName(entry.name).includes(wanted)) continue;
+
+        total += 1;
+        if (matches.length < limit) matches.push(entry);
+      }
+
+      return { matches, total, hidden: total - matches.length };
     },
   };
 }

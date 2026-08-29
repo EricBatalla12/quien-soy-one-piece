@@ -6,6 +6,7 @@ import {
   characterId,
   createCatalog,
   isCharacterId,
+  MAX_RESULTS,
   unusedCorrections,
 } from '../src/game/catalog.js';
 
@@ -148,4 +149,73 @@ test('un fichero de catálogo roto no se acepta en silencio', () => {
 test('lo que sale del catálogo construido es lo que se le dio, sin campos de más', () => {
   const catalog = createCatalog([{ id: 'nami', name: 'Nami', extra: 'no' }]);
   assert.deepEqual(catalog.list, [{ id: 'nami', name: 'Nami' }]);
+});
+
+// ---------------------------------------------------------------------------
+// El buscador (sección 6.4 de la espec v3)
+// ---------------------------------------------------------------------------
+
+const CREW = createCatalog([
+  { id: 'monkey-d-luffy', name: 'Monkey D. Luffy' },
+  { id: 'roronoa-zoro', name: 'Roronoa Zoro' },
+  { id: 'nico-robin', name: 'Nico Robin' },
+  { id: 'charlotte-linlin-big-mom', name: 'Charlotte Linlin / Big Mom' },
+  { id: 'nefertari-vivi', name: 'Nefertari Vivi' },
+]);
+
+test('el buscador encuentra por un trozo del nombre', () => {
+  const { matches } = CREW.search('zoro');
+
+  assert.deepEqual(matches, [{ id: 'roronoa-zoro', name: 'Roronoa Zoro' }]);
+});
+
+// Criterio 3: con o sin mayúsculas, con o sin acentos.
+test('el buscador no distingue mayúsculas ni acentos', () => {
+  for (const escrito of ['ROBIN', 'robín', '  Róbin  ']) {
+    assert.deepEqual(
+      CREW.search(escrito).matches.map((entry) => entry.id),
+      ['nico-robin'],
+      `buscando "${escrito}"`,
+    );
+  }
+});
+
+test('busca dentro del nombre entero, así que el apodo de detrás de la barra vale', () => {
+  assert.equal(CREW.search('big mom').matches[0].id, 'charlotte-linlin-big-mom');
+});
+
+test('con el campo vacío no se enseña nada', () => {
+  for (const nada of ['', '   ', null, undefined]) {
+    assert.deepEqual(CREW.search(nada), { matches: [], total: 0, hidden: 0 });
+  }
+});
+
+test('lo que no coincide con nadie no devuelve nada', () => {
+  assert.deepEqual(CREW.search('pepito'), { matches: [], total: 0, hidden: 0 });
+});
+
+// Criterio 4: como mucho 30 coincidencias, y avisa de cuántas faltan.
+test('el buscador no enseña más de treinta y dice cuántas se deja', () => {
+  const many = createCatalog(
+    Array.from({ length: 50 }, (_, i) => ({ id: `pirata-${i}`, name: `Pirata ${i}` })),
+  );
+  const { matches, total, hidden } = many.search('pirata');
+
+  assert.equal(matches.length, MAX_RESULTS);
+  assert.equal(total, 50);
+  assert.equal(hidden, 20);
+});
+
+test('si caben todas, no falta ninguna', () => {
+  const { matches, total, hidden } = CREW.search('n');
+
+  assert.equal(hidden, 0);
+  assert.equal(matches.length, total);
+});
+
+test('el tope se puede bajar, para que la interfaz no tenga que saber el número', () => {
+  const { matches, hidden } = CREW.search('n', 2);
+
+  assert.equal(matches.length, 2);
+  assert.equal(hidden, CREW.search('n').total - 2);
 });
