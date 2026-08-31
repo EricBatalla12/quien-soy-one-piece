@@ -46,6 +46,19 @@ function emblemOf(world) {
   return findWorld(world)?.emblem ?? '';
 }
 
+/**
+ * Cómo se llama lo que hay dentro de un mundo: un personaje en One Piece, un objeto
+ * en Minecraft (sección 6.4 de la espec v5).
+ *
+ * El plural sale de añadirle una ese, y el artículo es masculino en las dos palabras
+ * que hay. Si algún día entra una que no cumpla ninguna de las dos cosas, el registro
+ * tendrá que decirlo; hoy sería inventarse un problema.
+ */
+function nounOf(world) {
+  const one = findWorld(world)?.noun ?? 'personaje';
+  return { one, many: `${one}s` };
+}
+
 /** Un selector en blanco, para no obligar a quien solo quiere pintar una pantalla. */
 const EMPTY_PICKER = { query: '', chosenId: null, highlight: 0 };
 
@@ -171,13 +184,17 @@ function worldChooser(chosen) {
 }
 
 function roomScreen(view, { clues, catalog, picker, leaving }) {
+  // La palabra sale del mundo de la SALA y no del que se llevara señalado: dentro de
+  // una sala manda el suyo, y quien entró con el código no eligió ninguno.
+  const noun = nounOf(view.world.id);
+
   const screen =
     view.phase === 'waiting'
       ? waitingScreen(view)
       : view.phase === 'setup'
-        ? setupScreen(view, catalog, picker)
+        ? setupScreen(view, catalog, picker, noun)
         : view.phase === 'playing'
-          ? boardScreen(view, clues, catalog, picker)
+          ? boardScreen(view, clues, catalog, picker, noun)
           : endScreen(view);
 
   return `${rivalNotice(view)}${screen}${leaveSection(view, leaving)}`;
@@ -230,7 +247,7 @@ function waitingScreen(view) {
   `;
 }
 
-function setupScreen(view, catalog, picker) {
+function setupScreen(view, catalog, picker, noun) {
   const rival = escapeHtml(view.rival.name);
 
   if (view.chosenForRival !== null) {
@@ -244,20 +261,20 @@ function setupScreen(view, catalog, picker) {
 
   return `
     <section>
-      <h2>Elige el personaje de ${rival}</h2>
+      <h2>Elige el ${noun.one} de ${rival}</h2>
       <p>
-        Busca el personaje que ${rival} tendrá que adivinar y púlsalo.
+        Busca el ${noun.one} que ${rival} tendrá que adivinar y púlsalo.
         ${view.rivalHasChosen ? 'El tuyo ya está elegido.' : ''}
       </p>
       <form id="secret-form">
-        ${characterPicker('secret', catalog, picker, 'Busca un personaje…')}
+        ${characterPicker('secret', catalog, picker, noun, `Busca un ${noun.one}…`)}
         ${submitButton('Listo', picker)}
       </form>
     </section>
   `;
 }
 
-function boardScreen(view, clues, catalog, picker) {
+function boardScreen(view, clues, catalog, picker, noun) {
   const rival = escapeHtml(view.rival.name);
   const pending = view.pendingQuestion;
 
@@ -288,7 +305,7 @@ function boardScreen(view, clues, catalog, picker) {
         </form>
         <p class="or">o arriésgate</p>
         <form id="guess-form">
-          ${characterPicker('guess', catalog, picker, 'Creo que soy…')}
+          ${characterPicker('guess', catalog, picker, noun, 'Creo que soy…')}
           ${submitButton('Adivinar', picker)}
         </form>
       </section>
@@ -298,7 +315,7 @@ function boardScreen(view, clues, catalog, picker) {
   }
 
   return `
-    <p class="mission">Tienes que averiguar qué personaje eres.</p>
+    <p class="mission">Tienes que averiguar qué ${noun.one} eres.</p>
     ${historyList(view, clues)}
     ${clueBoard(view, clues)}
     ${actions}
@@ -346,11 +363,11 @@ function endScreen(view) {
  * navegue con lector de pantalla oiría un campo de texto normal y no se enteraría de
  * que debajo hay resultados ni de cuál está señalada (criterio 13).
  */
-function characterPicker(name, catalog, picker, placeholder) {
-  if (catalog === null) return `<p class="waiting">Cargando los personajes…</p>`;
+function characterPicker(name, catalog, picker, noun, placeholder) {
+  if (catalog === null) return `<p class="waiting">Cargando los ${noun.many}…</p>`;
   if (catalog.size === 0) {
     return `<p class="notice">
-      No se ha podido cargar la lista de personajes. Recarga la página para pedirla otra vez.
+      No se ha podido cargar la lista de ${noun.many}. Recarga la página para pedirla otra vez.
     </p>`;
   }
 
@@ -376,7 +393,7 @@ function characterPicker(name, catalog, picker, placeholder) {
     )
     .join('');
 
-  const note = resultsNote(picker.query, total, hidden);
+  const note = resultsNote(picker.query, total, hidden, noun);
 
   return `
     <div class="picker">
@@ -387,10 +404,10 @@ function characterPicker(name, catalog, picker, placeholder) {
         placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(picker.query)}" />
       ${
         options === '' && note === ''
-          ? `<ul id="${name}-results" class="sr-only" role="listbox" aria-label="Personajes"></ul>`
+          ? `<ul id="${name}-results" class="sr-only" role="listbox" aria-label="${capitalize(noun.many)}"></ul>`
           : `<div class="results">
               <ul id="${name}-results" class="options" role="listbox"
-                aria-label="Personajes">${options}</ul>
+                aria-label="${capitalize(noun.many)}">${options}</ul>
               ${note}
             </div>`
       }
@@ -404,9 +421,9 @@ function characterPicker(name, catalog, picker, placeholder) {
  * Con el campo vacío no dice nada: todavía no se ha buscado, así que no hay nada que
  * contar. Es el "solo invita a escribir" de la sección 6.4 de la espec.
  */
-function resultsNote(query, total, hidden) {
+function resultsNote(query, total, hidden, noun) {
   if (query.trim() === '') return '';
-  if (total === 0) return `<p class="results-note">Ningún personaje se llama así.</p>`;
+  if (total === 0) return `<p class="results-note">Ningún ${noun.one} se llama así.</p>`;
   if (hidden === 0) return '';
 
   return `<p class="results-note">Y ${hidden} más: escribe un poco más para verlas.</p>`;
@@ -517,6 +534,11 @@ function clueBoard(view, clues) {
       ${pinned.length === 0 ? '<p class="clues-empty">El tablero está vacío.</p>' : ''}
     </section>
   `;
+}
+
+/** Para un `aria-label`, que es un rótulo y no una frase. */
+function capitalize(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 /**

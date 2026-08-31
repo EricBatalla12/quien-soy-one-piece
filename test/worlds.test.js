@@ -32,6 +32,14 @@ test('todos los mundos se presentan con un nombre y una línea', () => {
   }
 });
 
+// Sección 5.1 de la espec v5: sin esto la interfaz llamaría personaje a un yunque.
+test('todos los mundos dicen cómo se llama lo que tienen dentro', () => {
+  for (const world of WORLDS) {
+    assert.ok(typeof world.noun === 'string', `${world.id} no dice qué hay dentro`);
+    assert.match(world.noun, /^[a-záéíóúñ]+$/, `${world.id}: una sola palabra en minúsculas`);
+  }
+});
+
 test('el mundo por defecto es uno de los que hay', () => {
   assert.ok(isWorldId(DEFAULT_WORLD));
 });

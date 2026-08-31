@@ -26,8 +26,8 @@ function soloRoom(world = 'one-piece') {
 }
 
 /** La sala tal y como la vería un jugador: exactamente lo que recibe la interfaz. */
-function viewOf(game, playerId, { connected = true } = {}) {
-  let room = joinRoom(soloRoom(), { name: 'Nami', token: 't2', now: NOW });
+function viewOf(game, playerId, { connected = true, world = 'one-piece' } = {}) {
+  let room = joinRoom(soloRoom(world), { name: 'Nami', token: 't2', now: NOW });
   if (!connected) {
     room = { ...room, players: { ...room.players, 1: { ...room.players[1], connected: false } } };
   }
@@ -559,5 +559,45 @@ test('la salida existe en el CSS', () => {
 
   for (const selector of ['.leave', '#leave', '#leave-confirm']) {
     assert.match(css, new RegExp(`\\${selector}[\\s,:{.]`), `falta ${selector} en el CSS`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// La palabra de cada mundo (v5)
+// ---------------------------------------------------------------------------
+
+// Criterio 5: donde One Piece dice "personaje", Minecraft dice "objeto". Recorre el
+// registro, así que un mundo nuevo con otra palabra queda cubierto sin tocar nada.
+test('la interfaz llama a lo que se adivina como lo llame su mundo', () => {
+  for (const world of WORLDS) {
+    const eligiendo = html({ view: viewOf(createGame(), 1, { world: world.id }) });
+    const jugando = html({ view: viewOf(startedGame(), 1, { world: world.id }) });
+
+    assert.ok(eligiendo.includes(`Elige el ${world.noun} de Nami`), `${world.name}: el título`);
+    assert.ok(eligiendo.includes(`Busca el ${world.noun} que Nami`), `${world.name}: el texto`);
+    assert.ok(eligiendo.includes(`Busca un ${world.noun}…`), `${world.name}: el buscador`);
+    assert.ok(
+      jugando.includes(`averiguar qué ${world.noun} eres`),
+      `${world.name}: lo que hay que adivinar`,
+    );
+  }
+});
+
+test('el aviso de que no hay coincidencias también usa la palabra del mundo', () => {
+  for (const world of WORLDS) {
+    const out = html({
+      view: viewOf(createGame(), 1, { world: world.id }),
+      picker: searching('zzzzz'),
+    });
+
+    assert.ok(out.includes(`Ningún ${world.noun} se llama así`), `${world.name}`);
+  }
+});
+
+test('mientras se descarga el catálogo se nombra en plural y con su palabra', () => {
+  for (const world of WORLDS) {
+    const out = html({ view: viewOf(createGame(), 1, { world: world.id }), catalog: null });
+
+    assert.ok(out.includes(`Cargando los ${world.noun}s…`), `${world.name}`);
   }
 });

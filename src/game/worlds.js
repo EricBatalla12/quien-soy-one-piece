@@ -67,6 +67,12 @@ const HUNTER_LICENCE = `
 /**
  * Los mundos, en el orden en que se ofrecen. El primero es el que viene elegido.
  *
+ * `noun` es cómo se llama lo que hay dentro, en singular: en One Piece se adivina un
+ * personaje y en Minecraft un objeto, y la interfaz no puede llamarle personaje a un
+ * yunque. El plural se forma con una ese y se da por hecho que la palabra es
+ * masculina —"el personaje", "el objeto"—, que es lo que toca en las que hay; el día
+ * que entre una que no, se le añadirá el género al registro.
+ *
  * El identificador **no se deriva del nombre**, al revés que el de un personaje:
  * "Hunter × Hunter" daría `hunter-hunter`, porque la equis no es una letra. Son unos
  * pocos y se escriben a mano, que además es lo que corresponde a algo que acaba
@@ -77,12 +83,14 @@ export const WORLDS = [
     id: 'one-piece',
     name: 'One Piece',
     tagline: 'Piratas, frutas del diablo y un sombrero de paja',
+    noun: 'personaje',
     emblem: STRAW_HAT,
   },
   {
     id: 'hunter-x-hunter',
     name: 'Hunter × Hunter',
     tagline: 'Cazadores, nen y un examen del que no vuelven todos',
+    noun: 'personaje',
     emblem: HUNTER_LICENCE,
   },
 ];

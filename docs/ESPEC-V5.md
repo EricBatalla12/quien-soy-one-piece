@@ -162,10 +162,12 @@ decenas. Eso es información buena, no un fallo.
 
 ### 6.4 La palabra de cada mundo
 
-Donde la interfaz decía "personaje" ahora dice lo que diga el mundo. Son cinco sitios:
-el título de la preparación, el texto que lo acompaña, el marcador de posición del
-buscador, el aviso de que no hay coincidencias y la línea que recuerda qué hay que
-adivinar.
+Donde la interfaz decía "personaje" ahora dice lo que diga el mundo. Son siete sitios,
+contados sobre el código: el título de la preparación, el texto que lo acompaña, el
+marcador de posición del buscador, el "Cargando los…" de mientras llega el catálogo,
+el aviso de no haber podido cargarlo, el de que no hay coincidencias, y la línea que
+recuerda qué hay que adivinar. Y el rótulo de la lista de resultados, que no se ve
+pero lo lee en voz alta un lector de pantalla.
 
 No se toca el nombre del juego ni el `<h1>`: en Minecraft se adivina un qué, pero el
 juego se llama "¿Quién soy?" y así se queda.
@@ -199,8 +201,9 @@ Además de lo que ya había, y que sigue valiendo con la palabra cambiada:
   Un item nuevo no aparece hasta que alguien lo ejecuta y sube el resultado.
 - **Los nombres son los de Mojang en español**, con sus rarezas: un huevo generador se
   llama "Generar creeper", porque es lo que pone en el juego.
-- **La palabra de cada mundo forma el plural con una ese.** Vale para "personajes" y
-  "objetos"; no valdría para todas las palabras del castellano.
+- **La palabra de cada mundo forma el plural con una ese, y se supone masculina.**
+  Vale para "el personaje" y "el objeto"; no valdría para todas las palabras del
+  castellano, y el día que entre una que no cumpla, habrá que decírselo al registro.
 
 ## 8. Criterios de aceptación
 
@@ -213,7 +216,7 @@ La v5 está terminada cuando todo esto se cumple:
    todos, cada uno con su nombre completo.
 4. Los nombres son los del juego en español.
 5. En una sala de Minecraft la interfaz dice "objeto" donde en una de One Piece dice
-   "personaje", en los cinco sitios de la sección 6.4.
+   "personaje", en todos los sitios de la sección 6.4.
 6. Minecraft tiene su emblema y sus colores, y no se ve con los de otro mundo.
 7. En el código, en la interfaz y en la documentación no queda ningún `anime`
    hablando de lo que ahora es un mundo.
