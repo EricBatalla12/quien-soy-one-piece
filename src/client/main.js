@@ -143,8 +143,13 @@ function handle(message) {
   applyToSession(session);
   loadClues();
 
+  // Al entrar en una sala su anime pasa a ser el que llevas señalado, así que al
+  // salir —o al cerrártela el rival— la pantalla de entrada sigue en el que jugabas
+  // y no te devuelve al de por defecto. Fuera de una sala no cambia nada.
+  chosenAnime = dressedAnime(model.view, chosenAnime);
+
   // El catálogo se pide al entrar en la sala, que es cuando se sabe cuál hace falta.
-  if (model.view !== null) loadCatalog(model.view.anime.id);
+  if (model.view !== null) loadCatalog(chosenAnime);
 
   paint();
 }

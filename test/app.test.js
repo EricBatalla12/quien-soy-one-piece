@@ -185,3 +185,12 @@ test('dentro de una sala manda el suyo, se hubiera señalado el que fuera', () =
 
   assert.equal(dressedAnime(view, 'one-piece'), 'hunter-x-hunter');
 });
+
+// Es también lo que hace que salir de una sala no te devuelva al anime de por
+// defecto: al entrar, el suyo pasa a ser el que llevas señalado, y al salir sigue.
+test('el anime de la sala se queda señalado cuando te quedas sin sala', () => {
+  const view = { anime: { id: 'hunter-x-hunter', name: 'Hunter × Hunter' } };
+  const remembered = dressedAnime(view, 'one-piece');
+
+  assert.equal(dressedAnime(null, remembered), 'hunter-x-hunter');
+});
