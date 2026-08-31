@@ -1,9 +1,4 @@
 [
-  {"id":"1st-elder","name":"1st Elder"},
-  {"id":"2nd-elder","name":"2nd Elder"},
-  {"id":"3rd-elder","name":"3rd Elder"},
-  {"id":"4th-elder","name":"4th Elder"},
-  {"id":"5th-elder","name":"5th Elder"},
   {"id":"a-o","name":"A.O"},
   {"id":"abdullah","name":"Abdullah"},
   {"id":"absalom","name":"Absalom"},
@@ -275,7 +270,7 @@
   {"id":"elizabello-ii","name":"Elizabello II"},
   {"id":"elmy","name":"Elmy"},
   {"id":"emporio-ivankov","name":"Emporio Ivankov"},
-  {"id":"ener","name":"Ener"},
+  {"id":"enel","name":"Enel"},
   {"id":"epoida","name":"Epoida"},
   {"id":"ethanbaron-v-nusjuro","name":"Ethanbaron V. Nusjuro"},
   {"id":"eustass-kidd","name":"Eustass Kidd"},

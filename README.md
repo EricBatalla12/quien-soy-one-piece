@@ -12,7 +12,7 @@ para los dos y se vuelve a la pantalla de entrada.
 
 ## Estado
 
-✅ **v3 terminada.** El personaje se elige de un catálogo cerrado de 783 personajes en
+✅ **v3 terminada.** El personaje se elige de un catálogo cerrado de 778 personajes en
 vez de escribirse a mano: se busca, se pulsa, y acertar se decide comparando
 identificadores. Se acabó fallar por escribir "Luffy" donde ponía "Monkey D. Luffy".
 

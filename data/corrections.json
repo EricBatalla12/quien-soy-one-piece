@@ -1,12 +1,7 @@
 {
   "Monkey D Luffy": "Monkey D. Luffy",
 
-  "1er Doyen": "1st Elder",
-  "2e Doyen": "2nd Elder",
-  "3e Doyen": "3rd Elder",
-  "4e Doyen": "4th Elder",
-  "5e Doyen": "5th Elder",
-
+  "Ener": "Enel",
   "Marchall D. Teach / Barbe Noire": "Marshall D. Teach / Blackbeard",
   "Edward Newgate / Barbe Blanche": "Edward Newgate / Whitebeard",
   "Barbos Bruneriguez / Barbe Brune": "Barbos Bruneriguez / Brownbeard",
@@ -14,5 +9,11 @@
   "César Clown": "Caesar Clown",
   "Général Gasparde": "General Gasparde",
   "Zéphyr": "Zephyr",
-  "Végapunk": "Vegapunk"
+  "Végapunk": "Vegapunk",
+
+  "1er Doyen": null,
+  "2e Doyen": null,
+  "3e Doyen": null,
+  "4e Doyen": null,
+  "5e Doyen": null
 }

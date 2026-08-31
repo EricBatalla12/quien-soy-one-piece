@@ -121,13 +121,27 @@ Comprobado sobre la respuesta real, y por eso el script limpia en vez de copiar:
   el `id` del nombre, se funden solos.
 - **Restos del francés**, porque la API es de origen francés:
   `Edward Newgate / Barbe Blanche`, `Marchall D. Teach / Barbe Noire`.
+- **Nombres que son la versión francesa y no la que se conoce**: `Ener` por **Enel**.
+  Distinto de lo anterior: aquí no hay ninguna palabra en francés que delate el
+  problema, el nombre está mal a secas, y el buscador de la sección 6.4 busca por
+  nombre, así que un personaje así es un personaje inencontrable.
 - **Una errata**: `Marchall` por `Marshall`.
 - **Puntuación inconsistente**: `Monkey D Luffy` frente a `Rocks D. Xebec`.
+- **Cinco personajes por duplicado**: los Gorosei salen con su nombre —Jaygarcia
+  Saturn, Marcus Mars, Topman Warcury, Ethanbaron V. Nusjuro y Shepherd Ju Peter— y
+  otra vez como `1er Doyen`…`5e Doyen`. Estos no se funden solos, porque el nombre es
+  distinto.
 
 Las correcciones viven en **un fichero aparte, escrito a mano**, que el script aplica
 al final. Así se puede volver a generar el catálogo cuando la API añada personajes sin
 perder lo ya corregido, y cada corrección queda a la vista en vez de escondida en el
 código.
+
+Una corrección puede además **tirar la entrada**, y no solo cambiarle el nombre: se
+escribe `null` donde iría el nombre bueno. Es lo que se hace con los cinco `Doyen`
+duplicados. Se tiran en vez de renombrarlos a propósito: de un "3er Doyen" no hay
+manera de saber cuál de los cinco ancianos es, así que ponerle un nombre sería
+inventárselo, y los cinco buenos ya están en la lista.
 
 Un nombre con dos formas separadas por barra (`Charlotte Linlin / Big Mom`) se deja
 como está: el buscador busca sobre el nombre entero, así que escribir "big mom"

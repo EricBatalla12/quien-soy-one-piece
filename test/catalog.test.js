@@ -90,6 +90,22 @@ test('dos nombres que se corrigen al mismo se quedan en uno', () => {
   assert.equal(catalog.length, 1);
 });
 
+test('una corrección a null tira la entrada en vez de renombrarla', () => {
+  const catalog = buildCatalog(['1er Doyen', 'Jaygarcia Saturn'], { '1er Doyen': null });
+
+  assert.deepEqual(catalog, [{ id: 'jaygarcia-saturn', name: 'Jaygarcia Saturn' }]);
+});
+
+test('una entrada tirada no cuenta como corrección que sobra', () => {
+  assert.deepEqual(unusedCorrections(['1er Doyen'], { '1er Doyen': null }), []);
+});
+
+test('lo que no es ni nombre ni null no es una corrección', () => {
+  const catalog = buildCatalog(['Nami'], { Nami: 42 });
+
+  assert.deepEqual(catalog, [{ id: 'nami', name: 'Nami' }], 'se queda como estaba');
+});
+
 test('una corrección con una clave rara no se cuela como método del objeto', () => {
   const catalog = buildCatalog(['constructor'], {});
   assert.deepEqual(catalog, [{ id: 'constructor', name: 'constructor' }]);

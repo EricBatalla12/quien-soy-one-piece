@@ -62,6 +62,11 @@ export function isCharacterId(value) {
  * bueno. Se aplica antes de derivar el identificador, porque corregir "Marchall"
  * por "Marshall" tiene que corregir también el identificador.
  *
+ * Una corrección a `null` no cambia el nombre: **tira la entrada**. Hace falta
+ * porque la API trae a los cinco Gorosei dos veces, una con su nombre y otra como
+ * "1er Doyen"…"5e Doyen", y de esas cinco no se puede sacar a quién corresponde
+ * cada número. Renombrarlas sería inventárselo; lo honrado es quitarlas.
+ *
  * El orden es alfabético para que volver a generar el catálogo dé el mismo fichero
  * y el diff enseñe solo lo que ha cambiado de verdad.
  */
@@ -71,9 +76,11 @@ export function buildCatalog(names, corrections = {}) {
 
   for (const raw of names) {
     const given = tidy(raw);
-    const name = fixes.get(given) ?? given;
-    const id = characterId(name);
+    const name = fixes.has(given) ? fixes.get(given) : given;
 
+    if (name === null) continue; // sobra: la API la trae y nosotros no la queremos
+
+    const id = characterId(name);
     if (id === '') continue;
     if (!byId.has(id)) byId.set(id, { id, name });
   }
@@ -178,8 +185,8 @@ function correctionMap(corrections) {
 
   return new Map(
     Object.entries(corrections)
-      .filter(([, fixed]) => typeof fixed === 'string')
-      .map(([given, fixed]) => [tidy(given), tidy(fixed)]),
+      .filter(([, fixed]) => typeof fixed === 'string' || fixed === null)
+      .map(([given, fixed]) => [tidy(given), fixed === null ? null : tidy(fixed)]),
   );
 }
 
