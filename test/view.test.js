@@ -17,7 +17,7 @@ const CATALOG = createCatalog([
 
 /** El jugador 1 debe adivinar a Nico Robin; el jugador 2, a Roronoa Zoro. */
 function playingRoom() {
-  const room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW }), {
+  const room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW }), {
     name: 'Nami',
     token: 't2',
     now: NOW,
@@ -65,7 +65,7 @@ test('el personaje que elegiste tú lo ves, y con su nombre', () => {
 
 test('sabes si el rival ya ha elegido, pero no qué ha elegido', () => {
   const room = playingRoom();
-  const empty = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW }), {
+  const empty = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW }), {
     name: 'Nami',
     token: 't2',
     now: NOW,
@@ -108,7 +108,7 @@ test('un personaje que se cayó del catálogo no deja el historial en blanco', (
 // ---------------------------------------------------------------------------
 
 test('sin rival la sala está esperando, no en preparación', () => {
-  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
   const view = projectView(alone, 1, CATALOG);
 
   assert.equal(view.phase, 'waiting');
@@ -154,7 +154,7 @@ test('el marcador se ve entero', () => {
 });
 
 test('no hay vista de una plaza vacía', () => {
-  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
 
   assert.throws(() => projectView(alone, 2, CATALOG), /libre/);
 });
@@ -162,4 +162,17 @@ test('no hay vista de una plaza vacía', () => {
 test('el token de nadie sale nunca en la vista', () => {
   assert.ok(!wire(playingRoom(), 1).includes('t2'));
   assert.ok(!wire(playingRoom(), 1).includes('t1'));
+});
+
+// Criterio 3 de la v4: quien entra con el código ve a qué anime está jugando, y el
+// navegador lo necesita para pedir el catálogo correcto y vestirse.
+test('la vista dice de qué anime es la sala, a los dos jugadores', () => {
+  const room = playingRoom();
+
+  for (const playerId of [1, 2]) {
+    assert.deepEqual(projectView(room, playerId, CATALOG).anime, {
+      id: 'one-piece',
+      name: 'One Piece',
+    });
+  }
 });

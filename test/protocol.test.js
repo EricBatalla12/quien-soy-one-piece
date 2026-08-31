@@ -9,9 +9,10 @@ function wire(message) {
 }
 
 test('las acciones buenas pasan y salen limpias', () => {
-  assert.deepEqual(readMessage(wire({ type: 'create', name: '  Eric  ' })), {
+  assert.deepEqual(readMessage(wire({ type: 'create', name: '  Eric  ', anime: 'one-piece' })), {
     type: 'create',
     name: 'Eric',
+    anime: 'one-piece',
   });
   assert.deepEqual(readMessage(wire({ type: 'join', code: 'nakam', name: 'Nami' })), {
     type: 'join',
@@ -44,7 +45,10 @@ test('una acción inventada se rechaza', () => {
 
 test('los textos vacíos no pasan, y el error dice cuál', () => {
   assert.throws(() => readMessage(wire({ type: 'ask', text: '   ' })), /pregunta no puede/);
-  assert.throws(() => readMessage(wire({ type: 'create', name: 42 })), /nombre no puede/);
+  assert.throws(
+    () => readMessage(wire({ type: 'create', name: 42, anime: 'one-piece' })),
+    /nombre no puede/,
+  );
 });
 
 // Criterio 5 de la v3: el personaje viaja como identificador, y aquí se mira que al
@@ -111,5 +115,23 @@ test('se distingue entrar en una sala de jugar dentro de ella', () => {
   for (const type of ['create', 'join', 'resume']) assert.ok(isEntryType(type));
   for (const type of ['secret', 'ask', 'answer', 'guess', 'rematch', 'leave']) {
     assert.ok(!isEntryType(type));
+  }
+});
+
+// Criterio 6 de la v4: una sala de un anime que no existe se rechaza en la puerta,
+// también si el `create` se escribe a mano por el WebSocket.
+test('crear una sala de un anime inventado no cuela', () => {
+  for (const bad of [undefined, null, 42, '', 'naruto', 'One Piece', '__proto__']) {
+    assert.throws(
+      () => readMessage(wire({ type: 'create', name: 'Eric', anime: bad })),
+      /anime no existe/,
+      `${JSON.stringify(bad)} no debería valer como anime`,
+    );
+  }
+});
+
+test('los dos animes de la v4 sí pasan', () => {
+  for (const anime of ['one-piece', 'hunter-x-hunter']) {
+    assert.equal(readMessage(wire({ type: 'create', name: 'Eric', anime })).anime, anime);
   }
 });

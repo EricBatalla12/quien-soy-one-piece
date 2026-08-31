@@ -21,7 +21,7 @@ const CATALOG = createCatalog([
 
 /** La sala tal y como la vería un jugador: exactamente lo que recibe la interfaz. */
 function viewOf(game, playerId, { connected = true } = {}) {
-  let room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW }), {
+  let room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW }), {
     name: 'Nami',
     token: 't2',
     now: NOW,
@@ -54,7 +54,7 @@ test('sin sala se piden el nombre y el código', () => {
 });
 
 test('la sala recién creada enseña el código', () => {
-  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
   const out = html({ view: projectView(alone, 1, CATALOG) });
 
   assert.match(out, /class="code">NAKAM</);
@@ -80,7 +80,7 @@ test('el turno del rival se anuncia con su nombre', () => {
 });
 
 test('un nombre con HTML no se ejecuta', () => {
-  const room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW }), {
+  const room = joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW }), {
     name: '<script>x</script>',
     token: 't2',
     now: NOW,
@@ -442,7 +442,7 @@ test('las clases nuevas de la v2 existen en el CSS', () => {
 // ---------------------------------------------------------------------------
 
 test('se puede salir desde cualquier pantalla de la sala', () => {
-  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
   const finished = guess(startedGame(), 1, 'nico-robin', CATALOG);
 
   const screens = {
@@ -471,7 +471,7 @@ test('la confirmación avisa de que la sala se cierra también para el rival', (
 });
 
 test('esperando solo, la confirmación no habla de ningún rival', () => {
-  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', now: NOW });
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
   const out = html({ view: projectView(alone, 1, CATALOG), leaving: true });
 
   assert.match(out, /la sala se cierra\s*y la partida/);

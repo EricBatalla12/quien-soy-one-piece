@@ -6,9 +6,12 @@
  * la espec v2.
  *
  * Sigue sin saber nada de sockets, así que se testea sin levantar nada. El reloj, el
- * azar de los códigos, el de los tokens y el catálogo llegan de fuera por la misma
- * razón; el catálogo, además, es lo que valida los personajes y lo que resuelve sus
- * nombres para la vista.
+ * azar de los códigos, el de los tokens y los catálogos llegan de fuera por la misma
+ * razón; los catálogos, además, son lo que valida los personajes y lo que resuelve
+ * sus nombres para la vista.
+ *
+ * Desde la v4 hay uno por anime y cada sala usa el suyo, el que eligió quien la creó:
+ * el lobby es el único sitio donde se sabe qué catálogo le toca a qué partida.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -28,14 +31,19 @@ import {
 const CODE_ATTEMPTS = 20;
 
 export function createLobby({
-  catalog,
+  catalogs,
   now = Date.now,
   newCode = makeCode,
   newToken = randomUUID,
 } = {}) {
-  if (catalog === undefined) throw new Error('El lobby necesita el catálogo de personajes');
+  if (catalogs === undefined) throw new Error('El lobby necesita los catálogos de personajes');
 
   const rooms = new Map();
+
+  /** El catálogo con el que se juega en esta sala: el de su anime. */
+  function catalogOf(room) {
+    return catalogs.of(room.anime);
+  }
 
   /** La sala, o un error. Una sala caducada es una sala que ya no existe. */
   function liveRoom(code) {
@@ -51,11 +59,14 @@ export function createLobby({
   }
 
   return {
-    /** Abre una sala nueva. Quien la abre se sienta en la plaza 1. */
-    open(name) {
+    /**
+     * Abre una sala nueva. Quien la abre se sienta en la plaza 1 y elige el anime;
+     * quien entre después lo hereda.
+     */
+    open(name, anime) {
       const code = freeCode();
       const token = newToken();
-      rooms.set(code, createRoom({ code, name, token, now: now() }));
+      rooms.set(code, createRoom({ code, name, token, anime, now: now() }));
 
       return { code, playerId: 1, token };
     },
@@ -86,7 +97,8 @@ export function createLobby({
 
     /** Una acción de dentro de la sala. Devuelve la sala ya avanzada. */
     act(code, playerId, message) {
-      const room = applyAction(liveRoom(code), playerId, message, now(), catalog);
+      const before = liveRoom(code);
+      const room = applyAction(before, playerId, message, now(), catalogOf(before));
       rooms.set(code, room);
 
       return room;
@@ -108,7 +120,8 @@ export function createLobby({
 
     /** Lo que hay que enseñarle a un jugador de esta sala. */
     view(code, playerId) {
-      return projectView(liveRoom(code), playerId, catalog);
+      const room = liveRoom(code);
+      return projectView(room, playerId, catalogOf(room));
     },
 
     /**

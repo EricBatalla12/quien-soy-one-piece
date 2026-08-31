@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { ANIMES, catalogPath } from '../src/game/animes.js';
 import { contentType, publicPath } from '../src/server/static.js';
 
 test('la raíz es el juego', () => {
@@ -19,8 +20,18 @@ test('se sirve lo que necesita el navegador', () => {
 // que el navegador tiene que poder pedirlo, y con él las dos piezas que lo manejan.
 test('el catálogo y lo que hace falta para buscar en él sí se sirven', () => {
   assert.equal(publicPath('/data/one-piece.json'), 'data/one-piece.json');
+  assert.equal(publicPath('/src/game/animes.js'), 'src/game/animes.js');
   assert.equal(publicPath('/src/game/catalog.js'), 'src/game/catalog.js');
   assert.equal(publicPath('/src/game/normalize.js'), 'src/game/normalize.js');
+});
+
+// Criterio 8 de la v4: añadir un anime no puede exigir acordarse de publicar su
+// fichero, así que la lista blanca sale del registro.
+test('se sirve el catálogo de todos los animes, no solo el primero', () => {
+  for (const anime of ANIMES) {
+    const path = catalogPath(anime.id);
+    assert.equal(publicPath(`/${path}`), path, `${anime.name} no se está sirviendo`);
+  }
 });
 
 test('no se sirve nada más del repositorio', () => {

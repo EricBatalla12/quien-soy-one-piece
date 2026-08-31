@@ -5,12 +5,19 @@ import { createCatalog } from '../src/game/catalog.js';
 import { createLobby } from '../src/server/lobby.js';
 import { ROOM_TTL_MS } from '../src/server/rooms.js';
 
-/** Un catálogo de mentira: el lobby no lee el del repositorio. */
+/** Un catálogo de mentira: el lobby no lee los del repositorio. */
 const CATALOG = createCatalog([
   { id: 'roronoa-zoro', name: 'Roronoa Zoro' },
   { id: 'nico-robin', name: 'Nico Robin' },
   { id: 'sanji', name: 'Sanji' },
 ]);
+
+/** Y otro, de otro anime, para comprobar que cada sala usa el suyo. */
+const OTHER = createCatalog([{ id: 'gon-freecss', name: 'Gon Freecss' }]);
+
+const CATALOGS = {
+  of: (anime) => (anime === 'hunter-x-hunter' ? OTHER : CATALOG),
+};
 
 /**
  * Un lobby con el reloj y el azar en la mano: los códigos salen en orden y el
@@ -22,7 +29,7 @@ function fakeLobby() {
   let tokens = 0;
 
   const lobby = createLobby({
-    catalog: CATALOG,
+    catalogs: CATALOGS,
     now: () => clock,
     newCode: () => ['NAKAM', 'ZORRO', 'SANJI'][codes++ % 3],
     newToken: () => `token-${++tokens}`,
@@ -31,13 +38,13 @@ function fakeLobby() {
   return { lobby, advance: (ms) => (clock += ms) };
 }
 
-test('un lobby sin catálogo no arranca: no podría validar ningún personaje', () => {
-  assert.throws(() => createLobby(), /catálogo/);
+test('un lobby sin catálogos no arranca: no podría validar ningún personaje', () => {
+  assert.throws(() => createLobby(), /catálogos/);
 });
 
 test('cerrar una sala la borra, y devuelve la que había para poder avisar', () => {
   const { lobby } = fakeLobby();
-  const host = lobby.open('Eric');
+  const host = lobby.open('Eric', 'one-piece');
   lobby.join(host.code, 'Nami');
 
   const closed = lobby.close(host.code);
@@ -56,7 +63,7 @@ test('cerrar una sala que ya no está no se queja: quien se va se va igual', () 
 /** Sala con los dos jugadores dentro y sus dos tokens. */
 function seated() {
   const { lobby, advance } = fakeLobby();
-  const host = lobby.open('Eric');
+  const host = lobby.open('Eric', 'one-piece');
   const guest = lobby.join(host.code, 'Nami');
 
   return { lobby, advance, host, guest };
@@ -64,7 +71,7 @@ function seated() {
 
 test('abrir una sala te sienta en la plaza 1 con un token', () => {
   const { lobby } = fakeLobby();
-  const host = lobby.open('Eric');
+  const host = lobby.open('Eric', 'one-piece');
 
   assert.equal(host.code, 'NAKAM');
   assert.equal(host.playerId, 1);
@@ -104,23 +111,23 @@ test('un tercero con el código se queda fuera', () => {
 test('dos salas a la vez no comparten código', () => {
   const { lobby } = fakeLobby();
 
-  assert.equal(lobby.open('Eric').code, 'NAKAM');
-  assert.equal(lobby.open('Nami').code, 'ZORRO');
+  assert.equal(lobby.open('Eric', 'one-piece').code, 'NAKAM');
+  assert.equal(lobby.open('Nami', 'one-piece').code, 'ZORRO');
   assert.equal(lobby.size, 2);
 });
 
 test('si el azar repite un código se pide otro', () => {
-  const lobby = createLobby({ catalog: CATALOG, newCode: sequence(['NAKAM', 'NAKAM', 'ZORRO']) });
+  const lobby = createLobby({ catalogs: CATALOGS, newCode: sequence(['NAKAM', 'NAKAM', 'ZORRO']) });
 
-  assert.equal(lobby.open('Eric').code, 'NAKAM');
-  assert.equal(lobby.open('Nami').code, 'ZORRO');
+  assert.equal(lobby.open('Eric', 'one-piece').code, 'NAKAM');
+  assert.equal(lobby.open('Nami', 'one-piece').code, 'ZORRO');
 });
 
 test('si nunca sale un código libre, crear la sala falla en vez de pisar la otra', () => {
-  const lobby = createLobby({ catalog: CATALOG, newCode: () => 'NAKAM' });
-  lobby.open('Eric');
+  const lobby = createLobby({ catalogs: CATALOGS, newCode: () => 'NAKAM' });
+  lobby.open('Eric', 'one-piece');
 
-  assert.throws(() => lobby.open('Nami'), /No se ha podido crear/);
+  assert.throws(() => lobby.open('Nami', 'one-piece'), /No se ha podido crear/);
   assert.equal(lobby.size, 1);
 });
 
@@ -199,9 +206,9 @@ test('una sala caducada deja de existir en cuanto alguien la toca', () => {
 
 test('la limpieza tira las salas caducadas y dice cuáles eran', () => {
   const { lobby, advance } = fakeLobby();
-  const abandoned = lobby.open('Eric');
+  const abandoned = lobby.open('Eric', 'one-piece');
   advance(ROOM_TTL_MS + 1);
-  const fresh = lobby.open('Nami');
+  const fresh = lobby.open('Nami', 'one-piece');
 
   const dead = lobby.sweep();
 
@@ -222,3 +229,38 @@ function sequence(values) {
   let index = 0;
   return () => values[Math.min(index++, values.length - 1)];
 }
+
+// ---------------------------------------------------------------------------
+// Cada sala juega a lo suyo (v4)
+// ---------------------------------------------------------------------------
+
+// Criterio 5: el servidor rechaza un personaje que no esté en el catálogo DE ESA
+// SALA. Gon existe, pero no en una sala de One Piece.
+test('cada sala valida los personajes contra el catálogo de su anime', () => {
+  const { lobby } = fakeLobby();
+  const pirates = lobby.open('Eric', 'one-piece');
+  lobby.join(pirates.code, 'Nami');
+  const hunters = lobby.open('Gon', 'hunter-x-hunter');
+  lobby.join(hunters.code, 'Killua');
+
+  assert.throws(
+    () => lobby.act(pirates.code, 1, { type: 'secret', characterId: 'gon-freecss' }),
+    /no está en el catálogo/,
+  );
+  assert.throws(
+    () => lobby.act(hunters.code, 1, { type: 'secret', characterId: 'roronoa-zoro' }),
+    /no está en el catálogo/,
+  );
+
+  assert.doesNotThrow(() => lobby.act(hunters.code, 1, { type: 'secret', characterId: 'gon-freecss' }));
+  assert.equal(lobby.view(hunters.code, 1).chosenForRival, 'Gon Freecss');
+});
+
+test('la vista de cada sala dice su anime', () => {
+  const { lobby } = fakeLobby();
+  const pirates = lobby.open('Eric', 'one-piece');
+  const hunters = lobby.open('Gon', 'hunter-x-hunter');
+
+  assert.equal(lobby.view(pirates.code, 1).anime.id, 'one-piece');
+  assert.equal(lobby.view(hunters.code, 1).anime.id, 'hunter-x-hunter');
+});

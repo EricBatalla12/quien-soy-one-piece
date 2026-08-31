@@ -10,16 +10,23 @@
  * directorio se pueden testear sin levantar nada.
  */
 
+import { ANIMES, catalogPath } from '../game/animes.js';
+
 /**
  * Ficheros sueltos que se sirven tal cual.
  *
- * Además del juego, el catálogo de personajes y las dos piezas puras que el
- * navegador necesita para buscar en él. Se nombran una a una en vez de abrir
- * `src/game/`: ahí también viven las reglas y la vista, que son cosa del servidor.
+ * Además del juego, el catálogo de cada anime y las tres piezas puras que el
+ * navegador necesita: el registro de animes para la pantalla de entrada, y las dos
+ * que buscan en un catálogo. Se nombran una a una en vez de abrir `src/game/`: ahí
+ * también viven las reglas y la vista, que son cosa del servidor.
+ *
+ * Los catálogos salen del registro y no de una lista escrita aquí: añadir un anime no
+ * puede exigir acordarse de publicar su fichero (criterio 8 de la espec v4).
  */
 const PUBLIC_FILES = [
   'index.html',
-  'data/one-piece.json',
+  ...ANIMES.map((anime) => catalogPath(anime.id)),
+  'src/game/animes.js',
   'src/game/catalog.js',
   'src/game/normalize.js',
 ];

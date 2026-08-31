@@ -12,6 +12,7 @@
  * enseñar al jugador tal cual.
  */
 
+import { isAnimeId } from '../game/animes.js';
 import { isCharacterId } from '../game/catalog.js';
 import { ANSWERS } from '../game/state.js';
 import { isValidCode, normalizeCode } from './rooms.js';
@@ -37,7 +38,11 @@ export function readMessage(raw) {
 
   switch (message.type) {
     case 'create':
-      return { type: 'create', name: readText(message.name, 'El nombre') };
+      return {
+        type: 'create',
+        name: readText(message.name, 'El nombre'),
+        anime: readAnime(message.anime),
+      };
     case 'join':
       return {
         type: 'join',
@@ -95,6 +100,19 @@ function readText(value, label) {
  */
 function readCharacterId(value) {
   if (!isCharacterId(value)) throw new Error('Ese personaje no existe');
+  return value;
+}
+
+/**
+ * El anime de una sala nueva.
+ *
+ * Aquí sí se comprueba que exista, y no solo que tenga forma, al revés que con un
+ * personaje: los animes son unos pocos y están en el registro, que es código puro,
+ * así que no hace falta esperar a tener un catálogo delante. Es el criterio 6 de la
+ * v4, y vale también para un `create` escrito a mano por el WebSocket.
+ */
+function readAnime(value) {
+  if (!isAnimeId(value)) throw new Error('Ese anime no existe');
   return value;
 }
 

@@ -4,9 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 import { WebSocket } from 'ws';
 
+import { ANIMES, catalogPath } from '../src/game/animes.js';
 import { startServer } from '../src/server/server.js';
 import { createLobby } from '../src/server/lobby.js';
-import { loadCatalog } from '../src/server/catalog.js';
+import { loadCatalogs } from '../src/server/catalog.js';
 import { ROOM_TTL_MS } from '../src/server/rooms.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -81,7 +82,7 @@ function withTimeout(promise, what) {
 async function playing() {
   const host = player();
   await host.open;
-  host.send({ type: 'create', name: 'Eric' });
+  host.send({ type: 'create', name: 'Eric', anime: 'one-piece' });
   const seated = await host.next('seated');
 
   const guest = player();
@@ -337,7 +338,7 @@ test('quien sale puede crear otra sala sin recargar la página', async () => {
   guest.send({ type: 'leave' });
   await guest.next('left');
 
-  guest.send({ type: 'create', name: 'Nami' });
+  guest.send({ type: 'create', name: 'Nami', anime: 'one-piece' });
   const seated = await guest.next('seated');
 
   assert.equal(seated.playerId, 1, 'su plaza anterior ya no le ata a nada');
@@ -356,7 +357,7 @@ test('al que se queda tampoco se le corta la conexión, y puede empezar otra par
 
   assert.ok(host.isOpen(), 'el socket del que se queda sigue abierto');
 
-  host.send({ type: 'create', name: 'Eric' });
+  host.send({ type: 'create', name: 'Eric', anime: 'one-piece' });
   const seated = await host.next('seated');
 
   assert.equal(seated.playerId, 1);
@@ -368,7 +369,7 @@ test('al que se queda tampoco se le corta la conexión, y puede empezar otra par
 test('salir de una sala en la que aún no ha entrado nadie no molesta a nadie', async () => {
   const alone = player();
   await alone.open;
-  alone.send({ type: 'create', name: 'Eric' });
+  alone.send({ type: 'create', name: 'Eric', anime: 'one-piece' });
   const seated = await alone.next('seated');
 
   alone.send({ type: 'leave' });
@@ -394,6 +395,58 @@ test('no se puede salir de una sala en la que no estás', async () => {
 });
 
 // ---------------------------------------------------------------------------
+// El anime de la sala (v4)
+// ---------------------------------------------------------------------------
+
+// Criterios 2 y 3: la sala se crea con un anime y quien entra con el código lo hereda
+// sin elegir nada, y lo ve.
+test('quien entra con el código juega al anime de la sala', async () => {
+  const host = player();
+  await host.open;
+  host.send({ type: 'create', name: 'Gon', anime: 'hunter-x-hunter' });
+  const seated = await host.next('seated');
+
+  const guest = player();
+  await guest.open;
+  guest.send({ type: 'join', code: seated.code, name: 'Killua' });
+
+  const view = (await guest.next('view')).view;
+  assert.deepEqual(view.anime, { id: 'hunter-x-hunter', name: 'Hunter × Hunter' });
+
+  // Y se juega con su catálogo: Gon existe aquí y Zoro no.
+  host.send({ type: 'secret', characterId: 'zoro' });
+  assert.match((await host.next('error')).message, /personaje/);
+
+  host.send({ type: 'secret', characterId: 'killua-zoldyck' });
+  const chosen = await host.next('view', (m) => m.view.chosenForRival !== null);
+  assert.equal(chosen.view.chosenForRival, 'Killua Zoldyck');
+
+  host.close();
+  guest.close();
+});
+
+// Criterio 6: también si el `create` se manda a mano por el WebSocket.
+test('no se puede crear una sala de un anime que no existe', async () => {
+  const rogue = player();
+  await rogue.open;
+  rogue.send({ type: 'create', name: 'Eric', anime: 'naruto' });
+
+  assert.match((await rogue.next('error')).message, /anime no existe/);
+
+  rogue.close();
+});
+
+// Criterio 11: el navegador pide el catálogo de su anime, y están todos publicados.
+test('el catálogo de cada anime se sirve por HTTP', async () => {
+  for (const anime of ANIMES) {
+    const response = await fetch(`http://localhost:${port}/${catalogPath(anime.id)}`);
+
+    assert.equal(response.status, 200, `${anime.name} no se está sirviendo`);
+    assert.ok((await response.json()).length > 0, `${anime.name} llega vacío`);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Criterio 15: la sala caduca y se avisa a quien siga dentro
 // ---------------------------------------------------------------------------
 
@@ -403,14 +456,14 @@ test('una sala abandonada caduca y echa a quien quedaba', async () => {
   const impatient = startServer({
     port: 0,
     root,
-    lobby: createLobby({ catalog: loadCatalog(root), now: () => clock }),
+    lobby: createLobby({ catalogs: loadCatalogs(root), now: () => clock }),
     upkeepMs: 20,
   });
   const impatientPort = await impatient.listen();
 
   const alone = player(impatientPort);
   await alone.open;
-  alone.send({ type: 'create', name: 'Eric' });
+  alone.send({ type: 'create', name: 'Eric', anime: 'one-piece' });
 
   // Hay que esperar a estar sentado: si el reloj salta antes de que el servidor
   // atienda el mensaje, la sala nacería ya con la hora nueva y no caducaría.

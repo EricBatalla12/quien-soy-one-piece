@@ -17,7 +17,7 @@ import { join } from 'node:path';
 
 import { WebSocketServer } from 'ws';
 
-import { loadCatalog } from './catalog.js';
+import { loadCatalogs } from './catalog.js';
 import { createLobby } from './lobby.js';
 import { isEntryType, readMessage } from './protocol.js';
 import { contentType, publicPath } from './static.js';
@@ -32,8 +32,8 @@ const UPKEEP_MS = 30_000;
 export function startServer({
   port = 0,
   root = process.cwd(),
-  catalog = loadCatalog(root),
-  lobby = createLobby({ catalog }),
+  catalogs = loadCatalogs(root),
+  lobby = createLobby({ catalogs }),
   upkeepMs = UPKEEP_MS,
 } = {}) {
   const http = createServer((request, response) => serveFile(request, response, root));
@@ -134,7 +134,7 @@ export function startServer({
 
     const seated =
       message.type === 'create'
-        ? lobby.open(message.name)
+        ? lobby.open(message.name, message.anime)
         : message.type === 'join'
           ? lobby.join(message.code, message.name)
           : lobby.resume(message.code, message.token);
