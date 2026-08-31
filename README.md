@@ -7,13 +7,18 @@ rival deberá adivinar. Por turnos, se hacen preguntas que se responden con **S�
 **No** o **A veces**, hasta que alguien se atreve a arriesgar un personaje.
 
 Uno crea una sala, le dicta el código de cinco letras a la otra persona, y a jugar.
-Podéis estar en ordenadores distintos.
+Podéis estar en ordenadores distintos. De la sala se sale cuando quieras: se cierra
+para los dos y se vuelve a la pantalla de entrada.
 
 ## Estado
 
 ✅ **v3 terminada.** El personaje se elige de un catálogo cerrado de 783 personajes en
 vez de escribirse a mano: se busca, se pulsa, y acertar se decide comparando
 identificadores. Se acabó fallar por escribir "Luffy" donde ponía "Monkey D. Luffy".
+
+En la 3.1 se le añadió **salir de la sala**: hasta entonces solo se salía cerrando la
+pestaña o esperando a que caducara. Con el rival dentro se pregunta antes, porque
+salir le cierra la sala a él también.
 
 ✅ **v2 terminada y desplegada.** Dos personas juegan desde ordenadores distintos, con
 el secreto guardado de verdad en el servidor.
@@ -79,7 +84,8 @@ El personaje que te toca adivinar **no sale nunca del servidor** hasta que la pa
 termina. A diferencia de la v1, abrir las herramientas de desarrollo no sirve de nada.
 
 Las partidas viven en memoria: si el servidor se reinicia, se pierden. Una sala
-abandonada caduca a los quince minutos.
+abandonada caduca a los quince minutos, y se cierra en el acto si uno de los dos
+jugadores se sale.
 
 ## Aviso
 
