@@ -7,7 +7,7 @@ import { createCatalog } from '../src/game/catalog.js';
 import { chosen, moveHighlight, noPicker, searching } from '../src/client/picker.js';
 import { ANSWERS } from '../src/game/state.js';
 import { projectView } from '../src/game/view.js';
-import { ANIMES } from '../src/game/animes.js';
+import { ANIMES, findAnime } from '../src/game/animes.js';
 import { createRoom, joinRoom, withGame } from '../src/server/rooms.js';
 import { answerQuestion, askQuestion, createGame, guess, setSecret } from '../src/game/state.js';
 
@@ -447,6 +447,50 @@ test('cada respuesta del juego tiene su color en el CSS', () => {
     assert.notEqual(key, 'unknown', `"${answer}" no tiene clave de color`);
     assert.match(css, new RegExp(`\\[data-value='${key}'\\]`), `el CSS no pinta "${key}"`);
   }
+});
+
+// Criterio 8 de la v4: un anime nuevo se ve con sus colores, no con los de One Piece.
+test('cada anime del registro tiene su bloque de colores en el CSS', () => {
+  const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
+
+  for (const anime of ANIMES) {
+    assert.match(
+      css,
+      new RegExp(`\\[data-anime='${anime.id}'\\]`),
+      `${anime.name} se vería con los colores de otro`,
+    );
+  }
+});
+
+test('cada anime trae su emblema y lo dibuja con el vocabulario del CSS', () => {
+  const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
+
+  for (const anime of ANIMES) {
+    assert.match(anime.emblem, /<svg class="emblem"/, `${anime.name} no tiene emblema`);
+
+    // Un emblema no trae colores propios: los pide al tema por su clase.
+    assert.ok(
+      !/#[0-9a-f]{3,6}\b/i.test(anime.emblem),
+      `el emblema de ${anime.name} lleva colores a pelo en vez de pedírselos al tema`,
+    );
+
+    for (const [, klass] of anime.emblem.matchAll(/class="([^"]+)"/g)) {
+      if (klass === 'emblem') continue;
+      assert.match(css, new RegExp(`\\.emblem \\.${klass}[\\s,{]`), `el CSS no pinta .${klass}`);
+    }
+  }
+});
+
+// Criterio 7: el emblema es el del anime que se está mirando.
+test('la cabecera lleva el emblema del anime, no siempre el mismo', () => {
+  const pirates = html({ view: null, anime: 'one-piece' });
+  const hunters = html({ view: null, anime: 'hunter-x-hunter' });
+
+  assert.ok(pirates.includes(findAnime('one-piece').emblem));
+  assert.ok(hunters.includes(findAnime('hunter-x-hunter').emblem));
+
+  const view = projectView(soloRoom('hunter-x-hunter'), 1, CATALOG);
+  assert.ok(html({ view, anime: 'hunter-x-hunter' }).includes(findAnime('hunter-x-hunter').emblem));
 });
 
 test('las clases nuevas de la v3 existen en el CSS', () => {

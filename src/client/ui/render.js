@@ -11,7 +11,7 @@
  * los dos digan.
  */
 
-import { ANIMES, DEFAULT_ANIME } from '../../game/animes.js';
+import { ANIMES, DEFAULT_ANIME, findAnime } from '../../game/animes.js';
 import { highlightIndex, isChosen } from '../picker.js';
 
 /**
@@ -36,24 +36,15 @@ export function answerKey(answer) {
   return ANSWER_KEYS.get(answer) ?? 'unknown';
 }
 
-/** Calavera pirata con sombrero de paja. Dibujo propio, sin arte con derechos. */
-const EMBLEM = `
-  <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
-    <g class="bones">
-      <path d="M18 74 L82 46" /><path d="M18 46 L82 74" />
-      <circle cx="16" cy="74" r="6" /><circle cx="84" cy="46" r="6" />
-      <circle cx="16" cy="46" r="6" /><circle cx="84" cy="74" r="6" />
-    </g>
-    <path class="skull" d="M50 30 C64 30 73 40 73 53 C73 62 68 68 62 71 L62 79 C62 82 59 84 50 84
-      C41 84 38 82 38 79 L38 71 C32 68 27 62 27 53 C27 40 36 30 50 30 Z" />
-    <ellipse class="eye" cx="41" cy="54" rx="6.5" ry="7.5" />
-    <ellipse class="eye" cx="59" cy="54" rx="6.5" ry="7.5" />
-    <path class="eye" d="M50 63 L46 71 L54 71 Z" />
-    <ellipse class="brim" cx="50" cy="30" rx="34" ry="8" />
-    <path class="crown" d="M31 30 C31 18 38 12 50 12 C62 12 69 18 69 30 Z" />
-    <path class="band" d="M31 27 L69 27 L69 31 L31 31 Z" />
-  </svg>
-`;
+/**
+ * El medallón de la cabecera: el emblema del anime que se esté mirando.
+ *
+ * El dibujo no está aquí desde la v4 —vive en el registro, uno por anime— porque
+ * jugar a Hunter × Hunter con la calavera de los Sombrero de Paja no tenía sentido.
+ */
+function emblemOf(anime) {
+  return findAnime(anime)?.emblem ?? '';
+}
 
 /** Un selector en blanco, para no obligar a quien solo quiere pintar una pantalla. */
 const EMPTY_PICKER = { query: '', chosenId: null, highlight: 0 };
@@ -80,7 +71,7 @@ export function render({
 }) {
   return `
     <header>
-      ${EMBLEM}
+      ${emblemOf(anime)}
       <h1>¿Quién soy?</h1>
       <p class="player">${headerLine(view)}</p>
     </header>
@@ -149,14 +140,19 @@ function entryScreen(chosen) {
  * (sección 4 de la espec v4), y se dice aquí para que no se busque dónde cambiarlo.
  *
  * Son botones y no un desplegable ni unos `radio`: son pocos, y así se ven los dos
- * de un vistazo con su línea de presentación. `aria-pressed` es lo que le cuenta a
- * un lector de pantalla cuál está elegido.
+ * de un vistazo con su emblema y su línea de presentación. `aria-pressed` es lo que
+ * le cuenta a un lector de pantalla cuál está elegido.
+ *
+ * Cada botón lleva el `data-anime` de su anime, y el CSS cuelga los colores de ese
+ * atributo: así el emblema de cada uno se pinta con **sus** colores aunque la página
+ * esté vestida del otro, sin que esto tenga que saber nada de temas.
  */
 function animeChooser(chosen) {
   const options = ANIMES.map(
     (anime) => `<li>
       <button type="button" class="anime${anime.id === chosen ? ' on' : ''}"
         data-anime="${escapeHtml(anime.id)}" aria-pressed="${anime.id === chosen}">
+        ${anime.emblem}
         <span class="anime-name">${escapeHtml(anime.name)}</span>
         <span class="anime-tagline">${escapeHtml(anime.tagline)}</span>
       </button>

@@ -1,9 +1,31 @@
 /**
- * Estética One Piece: mar abierto de fondo y un pergamino encima.
- * Todo con formas y degradados propios, sin imágenes ni fuentes externas.
+ * La estética: un fondo, una hoja encima y un emblema. Todo con formas y degradados
+ * propios, sin imágenes ni fuentes externas.
+ *
+ * Desde la v4 hay **un tema por anime** (sección 6.5 de la espec v4). Los colores
+ * cuelgan de `[data-anime=…]`, que el navegador pone en el `body`, y por eso cada
+ * bloque es un atributo y no una clase de la página: el botón de cada anime en la
+ * pantalla de entrada lleva ese mismo atributo, así que su emblema se pinta con
+ * **sus** colores aunque la página esté vestida del otro.
+ *
+ * Los tres colores de las respuestas —sí, no y a veces— no son del tema: significan
+ * lo mismo en todos los animes y se quedan en `:root`.
+ *
+ * Añadir un anime es añadir un bloque como el de abajo. Hay una prueba que comprueba
+ * que ninguno del registro se quede sin él.
  */
 
 :root {
+  --red: #b03328;
+  --green: #3f7c3d;
+
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
+/* One Piece: mar abierto y un pergamino encima. También es el tema por defecto. */
+:root,
+[data-anime='one-piece'] {
   --sea-deep: #06223a;
   --sea: #0d3c5c;
   --sea-light: #17618b;
@@ -13,14 +35,49 @@
   --parchment-deep: #e6d0a3;
   --ink: #3b2a16;
   --ink-soft: #6d5637;
+  --ink-pill: #5b4523;
 
   --gold: #d99f28;
   --gold-light: #f7d071;
-  --red: #b03328;
-  --green: #3f7c3d;
+  --gold-lighter: #ffe08d;
+  --gold-deep: #a97c1e;
+  --gold-shadow: #8a6417;
+  --gold-ink: #4a2c08;
 
-  --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --title: #7a2f1c;
+  --bone: #fdf8ec;
+
+  --edge: #b99a63;
+  --fibre: rgba(139, 110, 66, 0.05);
+  --toast: rgba(120, 88, 40, 0.2);
+}
+
+/* Hunter × Hunter: bosque de noche y una licencia de cazador encima. */
+[data-anime='hunter-x-hunter'] {
+  --sea-deep: #04170f;
+  --sea: #0a3021;
+  --sea-light: #14563a;
+  --foam: rgba(255, 255, 255, 0.06);
+
+  --parchment: #f1f1e6;
+  --parchment-deep: #d9dbcb;
+  --ink: #22301f;
+  --ink-soft: #566151;
+  --ink-pill: #2c4a3c;
+
+  --gold: #1f9d76;
+  --gold-light: #4fd3a5;
+  --gold-lighter: #79ecc0;
+  --gold-deep: #157a5c;
+  --gold-shadow: #0f5c45;
+  --gold-ink: #04271c;
+
+  --title: #146b4f;
+  --bone: #f5f8f3;
+
+  --edge: #8aa08c;
+  --fibre: rgba(60, 96, 72, 0.05);
+  --toast: rgba(30, 70, 50, 0.16);
 }
 
 * {
@@ -60,7 +117,7 @@ body::before {
   background: radial-gradient(ellipse at 50% 5%, transparent 35%, rgba(3, 17, 30, 0.6) 100%);
 }
 
-/* --- El pergamino ------------------------------------------------------- */
+/* --- La hoja de encima -------------------------------------------------- */
 
 #app {
   position: relative; /* por encima de la viñeta */
@@ -76,16 +133,16 @@ body::before {
 
   background:
     /* Fibras del papel: dos tramas finísimas cruzadas. Sin imágenes. */
-    repeating-linear-gradient(92deg, rgba(139, 110, 66, 0.05) 0 1px, transparent 1px 6px),
-    repeating-linear-gradient(3deg, rgba(139, 110, 66, 0.04) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(92deg, var(--fibre) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(3deg, var(--fibre) 0 1px, transparent 1px 9px),
     radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.5), transparent 55%),
     linear-gradient(160deg, var(--parchment), var(--parchment-deep));
-  border: 2px solid #b99a63;
+  border: 2px solid var(--edge);
   border-radius: 14px 22px 16px 20px; /* bordes desiguales: papel viejo */
   /* La sombra interior tuesta los bordes, como un papel guardado mucho tiempo. */
   box-shadow:
     var(--shadow),
-    inset 0 0 60px rgba(120, 88, 40, 0.2);
+    inset 0 0 60px var(--toast);
 }
 
 /* --- Cabecera ----------------------------------------------------------- */
@@ -101,8 +158,8 @@ header {
 }
 
 /*
- * El medallón no es adorno: la calavera y los huesos son de color hueso y sobre el
- * pergamino claro no se veían, solo se distinguía el sombrero.
+ * El medallón no es adorno: el dibujo es de color hueso y sobre la hoja clara no se
+ * vería, así que se pinta sobre el fondo oscuro del tema.
  */
 .emblem {
   grid-row: span 2;
@@ -117,26 +174,42 @@ header {
     0 3px 8px rgba(0, 0, 0, 0.35);
 }
 
-.emblem .skull,
-.emblem .bones circle {
-  fill: #fdf8ec;
+/*
+ * El vocabulario con el que se dibuja cualquier emblema. Cada anime trae su forma en
+ * `src/game/animes.js` y elige de aquí; los colores se los pone su tema, así que un
+ * emblema nuevo no necesita ni una línea de CSS.
+ *
+ * El grosor de un trazo es geometría, no color, y lo pone el dibujo.
+ */
+.emblem .bone {
+  fill: var(--bone);
 }
-.emblem .bones path {
-  stroke: #fdf8ec;
-  stroke-width: 9;
-  stroke-linecap: round;
-}
-.emblem .eye {
+.emblem .ink {
   fill: var(--ink);
 }
-.emblem .brim,
-.emblem .crown {
+.emblem .accent {
   fill: var(--gold-light);
-  stroke: #a97c1e;
+  stroke: var(--gold-deep);
   stroke-width: 1.5;
 }
-.emblem .band {
+.emblem .accent-deep {
+  fill: var(--gold);
+  stroke: var(--gold-deep);
+  stroke-width: 1.5;
+}
+.emblem .hot {
   fill: var(--red);
+}
+.emblem .stroke-bone,
+.emblem .stroke-ink {
+  fill: none;
+  stroke-linecap: round;
+}
+.emblem .stroke-bone {
+  stroke: var(--bone);
+}
+.emblem .stroke-ink {
+  stroke: var(--ink);
 }
 
 h1 {
@@ -144,7 +217,7 @@ h1 {
   margin: 0;
   font-size: clamp(1.6rem, 5vw, 2.3rem);
   letter-spacing: 0.02em;
-  color: #7a2f1c;
+  color: var(--title);
   text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -162,7 +235,7 @@ h1 {
   margin-left: 0.35rem;
   padding: 0.05rem 0.55rem;
   font-weight: 700;
-  color: #5b4523;
+  color: var(--ink-pill);
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(109, 86, 55, 0.35);
   border-radius: 999px;
@@ -182,7 +255,7 @@ h1 {
 h2 {
   margin: 0 0 0.6rem;
   font-size: 1.25rem;
-  color: #7a2f1c;
+  color: var(--title);
 }
 
 /* Lo que toca hacer ahora, en una cinta, para que se vea antes que nada. */
@@ -191,11 +264,11 @@ h2 {
   margin-bottom: 0.8rem;
   padding: 0.25rem 0.9rem;
   font-size: 1.05rem;
-  color: #4a2c08;
+  color: var(--gold-ink);
   background: linear-gradient(180deg, var(--gold-light), var(--gold));
-  border: 2px solid #a97c1e;
+  border: 2px solid var(--gold-deep);
   border-radius: 999px;
-  box-shadow: 0 2px 0 #8a6417;
+  box-shadow: 0 2px 0 var(--gold-shadow);
 }
 
 section {
@@ -239,11 +312,11 @@ button {
   padding: 0.65rem 1.3rem;
   font: inherit;
   font-weight: 700;
-  color: #4a2c08;
+  color: var(--gold-ink);
   background: linear-gradient(180deg, var(--gold-light), var(--gold));
-  border: 2px solid #a97c1e;
+  border: 2px solid var(--gold-deep);
   border-radius: 7px;
-  box-shadow: 0 3px 0 #8a6417;
+  box-shadow: 0 3px 0 var(--gold-shadow);
   cursor: pointer;
   transition:
     transform 0.08s,
@@ -251,16 +324,16 @@ button {
 }
 
 button:hover {
-  background: linear-gradient(180deg, #ffe08d, var(--gold-light));
+  background: linear-gradient(180deg, var(--gold-lighter), var(--gold-light));
 }
 
 button:active {
   transform: translateY(3px);
-  box-shadow: 0 0 0 #8a6417;
+  box-shadow: 0 0 0 var(--gold-shadow);
 }
 
 button:focus-visible {
-  outline: 3px solid #7a2f1c;
+  outline: 3px solid var(--title);
   outline-offset: 2px;
 }
 
@@ -338,9 +411,11 @@ button:focus-visible {
  * móvil es la diferencia entre acertar y no.
  */
 .anime-list button {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.7rem;
+  align-items: center;
   width: 100%;
   height: 100%;
   padding: 0.7rem 0.9rem;
@@ -359,19 +434,28 @@ button:focus-visible {
   transform: none;
 }
 
-/* El elegido, con el dorado del tema: se ve cuál es sin leer (criterio 1). */
+/* El elegido, con el acento de SU tema: se ve cuál es sin leer (criterio 1). */
 .anime-list button.on {
   background: linear-gradient(180deg, var(--gold-light), var(--gold));
-  border-color: #a97c1e;
-  box-shadow: 0 3px 0 #8a6417;
+  border-color: var(--gold-deep);
+  box-shadow: 0 3px 0 var(--gold-shadow);
+}
+
+/* El emblema de cada anime, del tamaño de una miniatura y no del de la cabecera. */
+.anime-list .emblem {
+  grid-row: span 2;
+  width: 3rem;
+  height: 3rem;
 }
 
 .anime-name {
+  align-self: end;
   font-size: 1.05rem;
   font-weight: 700;
 }
 
 .anime-tagline {
+  align-self: start;
   font-size: 0.85rem;
   font-weight: 400;
   font-style: italic;
@@ -379,7 +463,7 @@ button:focus-visible {
 }
 
 .anime-list button.on .anime-tagline {
-  color: #5b4523;
+  color: var(--ink-pill);
 }
 
 .animes-note {
@@ -443,11 +527,11 @@ blockquote {
   font-weight: 700;
   letter-spacing: 0.35em;
   text-indent: 0.35em; /* compensa el espaciado del último carácter */
-  color: #7a2f1c;
+  color: var(--title);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.32));
-  border: 3px double #b99a63;
+  border: 3px double var(--edge);
   border-radius: 9px;
-  box-shadow: inset 0 2px 10px rgba(120, 88, 40, 0.25);
+  box-shadow: inset 0 2px 10px var(--toast);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
   user-select: all; /* un toque lo selecciona entero para copiarlo */
 }
@@ -981,7 +1065,7 @@ form button[type='submit']:disabled {
 
 .revealed strong {
   font-size: 1.2rem;
-  color: #7a2f1c;
+  color: var(--title);
   overflow-wrap: anywhere;
 }
 

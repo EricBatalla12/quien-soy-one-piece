@@ -11,7 +11,58 @@
  * **Añadir un anime es añadir una entrada aquí**, su fichero de personajes y su
  * bloque de colores en `styles/main.css`. Nada más: ni reglas, ni salas, ni mensajes
  * (criterio 8 de la espec v4).
+ *
+ * El emblema vive aquí y no en el CSS porque es una forma, no un color: cada anime
+ * trae su dibujo y los colores se los pone su tema. Se dibuja con el vocabulario de
+ * clases que define `styles/main.css` —`bone`, `ink`, `accent`, `hot`— y no con
+ * colores propios, así que el mismo emblema vale para el tema que sea.
+ *
+ * **Dibujos propios, sin arte con derechos**, en todos los animes: son formas
+ * geométricas. Los nombres de los personajes no son arte, pero un logotipo sí.
  */
+
+/** Calavera pirata con sombrero de paja. */
+const STRAW_HAT = `
+  <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
+    <g class="stroke-bone" stroke-width="9">
+      <path d="M18 74 L82 46" /><path d="M18 46 L82 74" />
+    </g>
+    <g class="bone">
+      <circle cx="16" cy="74" r="6" /><circle cx="84" cy="46" r="6" />
+      <circle cx="16" cy="46" r="6" /><circle cx="84" cy="74" r="6" />
+    </g>
+    <path class="bone" d="M50 30 C64 30 73 40 73 53 C73 62 68 68 62 71 L62 79 C62 82 59 84 50 84
+      C41 84 38 82 38 79 L38 71 C32 68 27 62 27 53 C27 40 36 30 50 30 Z" />
+    <ellipse class="ink" cx="41" cy="54" rx="6.5" ry="7.5" />
+    <ellipse class="ink" cx="59" cy="54" rx="6.5" ry="7.5" />
+    <path class="ink" d="M50 63 L46 71 L54 71 Z" />
+    <ellipse class="accent" cx="50" cy="30" rx="34" ry="8" />
+    <path class="accent" d="M31 30 C31 18 38 12 50 12 C62 12 69 18 69 30 Z" />
+    <path class="hot" d="M31 27 L69 27 L69 31 L31 31 Z" />
+  </svg>
+`;
+
+/**
+ * Licencia de cazador: una tarjeta con la equis del título y la estrella del rango.
+ *
+ * La equis es lo que se reconoce, y es una aspa, no un logotipo de nadie. La tarjeta
+ * y la estrella son formas de manual: sirven para que el medallón tenga peso a cuatro
+ * rem, que es donde se ve.
+ */
+const HUNTER_LICENCE = `
+  <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
+    <g transform="rotate(-7 50 50)">
+      <rect class="bone" x="18" y="27" width="64" height="46" rx="7" />
+      <rect class="accent" x="18" y="27" width="64" height="11" rx="5.5" />
+      <g class="stroke-ink" stroke-width="9">
+        <path d="M35 47 L65 68" /><path d="M65 47 L35 68" />
+      </g>
+    </g>
+    <circle class="accent-deep" cx="76" cy="76" r="10" />
+    <path class="bone" d="M76 69 L77.9 73.4 L82.7 73.8 L79 77 L80.1 81.7 L76 79.2
+      L71.9 81.7 L73 77 L69.3 73.8 L74.1 73.4 Z" />
+  </svg>
+`;
 
 /**
  * Los animes, en el orden en que se ofrecen. El primero es el que viene elegido.
@@ -26,11 +77,13 @@ export const ANIMES = [
     id: 'one-piece',
     name: 'One Piece',
     tagline: 'Piratas, frutas del diablo y un sombrero de paja',
+    emblem: STRAW_HAT,
   },
   {
     id: 'hunter-x-hunter',
     name: 'Hunter × Hunter',
     tagline: 'Cazadores, nen y un examen del que no vuelven todos',
+    emblem: HUNTER_LICENCE,
   },
 ];
 
