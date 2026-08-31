@@ -7,7 +7,7 @@ import { createCatalog } from '../src/game/catalog.js';
 import { chosen, moveHighlight, noPicker, searching } from '../src/client/picker.js';
 import { ANSWERS } from '../src/game/state.js';
 import { projectView } from '../src/game/view.js';
-import { ANIMES, findAnime } from '../src/game/animes.js';
+import { WORLDS, findWorld } from '../src/game/worlds.js';
 import { createRoom, joinRoom, withGame } from '../src/server/rooms.js';
 import { answerQuestion, askQuestion, createGame, guess, setSecret } from '../src/game/state.js';
 
@@ -20,9 +20,9 @@ const CATALOG = createCatalog([
   { id: 'sanji', name: 'Sanji' },
 ]);
 
-/** Una sala recién creada, esperando rival, del anime que se le pida. */
-function soloRoom(anime = 'one-piece') {
-  return createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime, now: NOW });
+/** Una sala recién creada, esperando rival, del mundo que se le pida. */
+function soloRoom(world = 'one-piece') {
+  return createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world, now: NOW });
 }
 
 /** La sala tal y como la vería un jugador: exactamente lo que recibe la interfaz. */
@@ -57,32 +57,32 @@ test('sin sala se piden el nombre y el código', () => {
   assert.match(out, /id="code-input"/);
 });
 
-// Criterio 1 de la v4: en la pantalla de entrada se elige entre los animes del
+// Criterio 1 de la v4: en la pantalla de entrada se elige entre los mundos del
 // registro, y se ve cuál está elegido.
-test('la pantalla de entrada ofrece todos los animes y señala el elegido', () => {
-  const out = html({ view: null, anime: 'hunter-x-hunter' });
+test('la pantalla de entrada ofrece todos los mundos y señala el elegido', () => {
+  const out = html({ view: null, world: 'hunter-x-hunter' });
 
-  for (const anime of ANIMES) {
-    assert.match(out, new RegExp(`data-anime="${anime.id}"`), `falta ${anime.name}`);
-    assert.ok(out.includes(anime.name), `no se lee el nombre de ${anime.name}`);
+  for (const world of WORLDS) {
+    assert.match(out, new RegExp(`data-world="${world.id}"`), `falta ${world.name}`);
+    assert.ok(out.includes(world.name), `no se lee el nombre de ${world.name}`);
   }
 
-  assert.match(out, /data-anime="hunter-x-hunter" aria-pressed="true"/);
-  assert.match(out, /data-anime="one-piece" aria-pressed="false"/);
+  assert.match(out, /data-world="hunter-x-hunter" aria-pressed="true"/);
+  assert.match(out, /data-world="one-piece" aria-pressed="false"/);
 });
 
-// Criterio 3: dentro de la sala se ve a qué anime se está jugando, se haya elegido
+// Criterio 3: dentro de la sala se ve a qué mundo se está jugando, se haya elegido
 // o se haya heredado con el código.
-test('dentro de la sala se lee el anime en la cabecera', () => {
+test('dentro de la sala se lee el mundo en la cabecera', () => {
   const view = projectView(soloRoom('hunter-x-hunter'), 1, CATALOG);
 
-  assert.match(html({ view }), /class="pill anime">Hunter × Hunter</);
+  assert.match(html({ view }), /class="pill world">Hunter × Hunter</);
 });
 
-test('en la sala no hay dónde cambiar de anime', () => {
+test('en la sala no hay dónde cambiar de mundo', () => {
   const alone = soloRoom();
 
-  assert.ok(!html({ view: projectView(alone, 1, CATALOG) }).includes('data-anime='));
+  assert.ok(!html({ view: projectView(alone, 1, CATALOG) }).includes('data-world='));
 });
 
 test('la sala recién creada enseña el código', () => {
@@ -449,48 +449,48 @@ test('cada respuesta del juego tiene su color en el CSS', () => {
   }
 });
 
-// Criterio 8 de la v4: un anime nuevo se ve con sus colores, no con los de One Piece.
-test('cada anime del registro tiene su bloque de colores en el CSS', () => {
+// Criterio 8 de la v4: un mundo nuevo se ve con sus colores, no con los de One Piece.
+test('cada mundo del registro tiene su bloque de colores en el CSS', () => {
   const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
 
-  for (const anime of ANIMES) {
+  for (const world of WORLDS) {
     assert.match(
       css,
-      new RegExp(`\\[data-anime='${anime.id}'\\]`),
-      `${anime.name} se vería con los colores de otro`,
+      new RegExp(`\\[data-world='${world.id}'\\]`),
+      `${world.name} se vería con los colores de otro`,
     );
   }
 });
 
-test('cada anime trae su emblema y lo dibuja con el vocabulario del CSS', () => {
+test('cada mundo trae su emblema y lo dibuja con el vocabulario del CSS', () => {
   const css = readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
 
-  for (const anime of ANIMES) {
-    assert.match(anime.emblem, /<svg class="emblem"/, `${anime.name} no tiene emblema`);
+  for (const world of WORLDS) {
+    assert.match(world.emblem, /<svg class="emblem"/, `${world.name} no tiene emblema`);
 
     // Un emblema no trae colores propios: los pide al tema por su clase.
     assert.ok(
-      !/#[0-9a-f]{3,6}\b/i.test(anime.emblem),
-      `el emblema de ${anime.name} lleva colores a pelo en vez de pedírselos al tema`,
+      !/#[0-9a-f]{3,6}\b/i.test(world.emblem),
+      `el emblema de ${world.name} lleva colores a pelo en vez de pedírselos al tema`,
     );
 
-    for (const [, klass] of anime.emblem.matchAll(/class="([^"]+)"/g)) {
+    for (const [, klass] of world.emblem.matchAll(/class="([^"]+)"/g)) {
       if (klass === 'emblem') continue;
       assert.match(css, new RegExp(`\\.emblem \\.${klass}[\\s,{]`), `el CSS no pinta .${klass}`);
     }
   }
 });
 
-// Criterio 7: el emblema es el del anime que se está mirando.
-test('la cabecera lleva el emblema del anime, no siempre el mismo', () => {
-  const pirates = html({ view: null, anime: 'one-piece' });
-  const hunters = html({ view: null, anime: 'hunter-x-hunter' });
+// Criterio 7: el emblema es el del mundo que se está mirando.
+test('la cabecera lleva el emblema del mundo, no siempre el mismo', () => {
+  const pirates = html({ view: null, world: 'one-piece' });
+  const hunters = html({ view: null, world: 'hunter-x-hunter' });
 
-  assert.ok(pirates.includes(findAnime('one-piece').emblem));
-  assert.ok(hunters.includes(findAnime('hunter-x-hunter').emblem));
+  assert.ok(pirates.includes(findWorld('one-piece').emblem));
+  assert.ok(hunters.includes(findWorld('hunter-x-hunter').emblem));
 
   const view = projectView(soloRoom('hunter-x-hunter'), 1, CATALOG);
-  assert.ok(html({ view, anime: 'hunter-x-hunter' }).includes(findAnime('hunter-x-hunter').emblem));
+  assert.ok(html({ view, world: 'hunter-x-hunter' }).includes(findWorld('hunter-x-hunter').emblem));
 });
 
 test('las clases nuevas de la v3 existen en el CSS', () => {

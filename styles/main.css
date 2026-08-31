@@ -2,16 +2,16 @@
  * La estética: un fondo, una hoja encima y un emblema. Todo con formas y degradados
  * propios, sin imágenes ni fuentes externas.
  *
- * Desde la v4 hay **un tema por anime** (sección 6.5 de la espec v4). Los colores
- * cuelgan de `[data-anime=…]`, que el navegador pone en el `body`, y por eso cada
- * bloque es un atributo y no una clase de la página: el botón de cada anime en la
+ * Desde la v4 hay **un tema por mundo** (sección 6.5 de la espec v4). Los colores
+ * cuelgan de `[data-world=…]`, que el navegador pone en el `body`, y por eso cada
+ * bloque es un atributo y no una clase de la página: el botón de cada mundo en la
  * pantalla de entrada lleva ese mismo atributo, así que su emblema se pinta con
  * **sus** colores aunque la página esté vestida del otro.
  *
  * Los tres colores de las respuestas —sí, no y a veces— no son del tema: significan
- * lo mismo en todos los animes y se quedan en `:root`.
+ * lo mismo en todos los mundos y se quedan en `:root`.
  *
- * Añadir un anime es añadir un bloque como el de abajo. Hay una prueba que comprueba
+ * Añadir un mundo es añadir un bloque como el de abajo. Hay una prueba que comprueba
  * que ninguno del registro se quede sin él.
  */
 
@@ -25,7 +25,7 @@
 
 /* One Piece: mar abierto y un pergamino encima. También es el tema por defecto. */
 :root,
-[data-anime='one-piece'] {
+[data-world='one-piece'] {
   --sea-deep: #06223a;
   --sea: #0d3c5c;
   --sea-light: #17618b;
@@ -53,7 +53,7 @@
 }
 
 /* Hunter × Hunter: bosque de noche y una licencia de cazador encima. */
-[data-anime='hunter-x-hunter'] {
+[data-world='hunter-x-hunter'] {
   --sea-deep: #04170f;
   --sea: #0a3021;
   --sea-light: #14563a;
@@ -175,8 +175,8 @@ header {
 }
 
 /*
- * El vocabulario con el que se dibuja cualquier emblema. Cada anime trae su forma en
- * `src/game/animes.js` y elige de aquí; los colores se los pone su tema, así que un
+ * El vocabulario con el que se dibuja cualquier emblema. Cada mundo trae su forma en
+ * `src/game/worlds.js` y elige de aquí; los colores se los pone su tema, así que un
  * emblema nuevo no necesita ni una línea de CSS.
  *
  * El grosor de un trazo es geometría, no color, y lo pone el dibujo.
@@ -394,9 +394,9 @@ button:focus-visible {
   color: var(--ink-soft);
 }
 
-/* --- Elegir anime ------------------------------------------------------- */
+/* --- Elegir mundo ------------------------------------------------------- */
 
-.anime-list {
+.world-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: 0.7rem;
@@ -406,11 +406,11 @@ button:focus-visible {
 }
 
 /*
- * Cada anime es un botón entero y no un `radio` con su etiqueta: son pocos, y así
+ * Cada mundo es un botón entero y no un `radio` con su etiqueta: son pocos, y así
  * el nombre y la línea que lo presenta están dentro de lo que se pulsa, que en un
  * móvil es la diferencia entre acertar y no.
  */
-.anime-list button {
+.world-list button {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto;
@@ -426,35 +426,35 @@ button:focus-visible {
   box-shadow: none;
 }
 
-.anime-list button:hover {
+.world-list button:hover {
   background: rgba(255, 255, 255, 0.62);
 }
 
-.anime-list button:active {
+.world-list button:active {
   transform: none;
 }
 
 /* El elegido, con el acento de SU tema: se ve cuál es sin leer (criterio 1). */
-.anime-list button.on {
+.world-list button.on {
   background: linear-gradient(180deg, var(--gold-light), var(--gold));
   border-color: var(--gold-deep);
   box-shadow: 0 3px 0 var(--gold-shadow);
 }
 
-/* El emblema de cada anime, del tamaño de una miniatura y no del de la cabecera. */
-.anime-list .emblem {
+/* El emblema de cada mundo, del tamaño de una miniatura y no del de la cabecera. */
+.world-list .emblem {
   grid-row: span 2;
   width: 3rem;
   height: 3rem;
 }
 
-.anime-name {
+.world-name {
   align-self: end;
   font-size: 1.05rem;
   font-weight: 700;
 }
 
-.anime-tagline {
+.world-tagline {
   align-self: start;
   font-size: 0.85rem;
   font-weight: 400;
@@ -462,11 +462,11 @@ button:focus-visible {
   color: var(--ink-soft);
 }
 
-.anime-list button.on .anime-tagline {
+.world-list button.on .world-tagline {
   color: var(--ink-pill);
 }
 
-.animes-note {
+.worlds-note {
   margin: 0.7rem 0 0;
   font-size: 0.9rem;
   color: var(--ink-soft);

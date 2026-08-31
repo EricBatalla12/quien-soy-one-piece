@@ -134,7 +134,7 @@ export function startServer({
 
     const seated =
       message.type === 'create'
-        ? lobby.open(message.name, message.anime)
+        ? lobby.open(message.name, message.world)
         : message.type === 'join'
           ? lobby.join(message.code, message.name)
           : lobby.resume(message.code, message.token);

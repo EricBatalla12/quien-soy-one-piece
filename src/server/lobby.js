@@ -10,7 +10,7 @@
  * razón; los catálogos, además, son lo que valida los personajes y lo que resuelve
  * sus nombres para la vista.
  *
- * Desde la v4 hay uno por anime y cada sala usa el suyo, el que eligió quien la creó:
+ * Desde la v4 hay uno por mundo y cada sala usa el suyo, el que eligió quien la creó:
  * el lobby es el único sitio donde se sabe qué catálogo le toca a qué partida.
  */
 
@@ -40,9 +40,9 @@ export function createLobby({
 
   const rooms = new Map();
 
-  /** El catálogo con el que se juega en esta sala: el de su anime. */
+  /** El catálogo con el que se juega en esta sala: el de su mundo. */
   function catalogOf(room) {
-    return catalogs.of(room.anime);
+    return catalogs.of(room.world);
   }
 
   /** La sala, o un error. Una sala caducada es una sala que ya no existe. */
@@ -60,13 +60,13 @@ export function createLobby({
 
   return {
     /**
-     * Abre una sala nueva. Quien la abre se sienta en la plaza 1 y elige el anime;
+     * Abre una sala nueva. Quien la abre se sienta en la plaza 1 y elige el mundo;
      * quien entre después lo hereda.
      */
-    open(name, anime) {
+    open(name, world) {
       const code = freeCode();
       const token = newToken();
-      rooms.set(code, createRoom({ code, name, token, anime, now: now() }));
+      rooms.set(code, createRoom({ code, name, token, world, now: now() }));
 
       return { code, playerId: 1, token };
     },

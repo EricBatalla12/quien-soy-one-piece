@@ -12,7 +12,7 @@
  * enseñar al jugador tal cual.
  */
 
-import { isAnimeId } from '../game/animes.js';
+import { isWorldId } from '../game/worlds.js';
 import { isCharacterId } from '../game/catalog.js';
 import { ANSWERS } from '../game/state.js';
 import { isValidCode, normalizeCode } from './rooms.js';
@@ -41,7 +41,7 @@ export function readMessage(raw) {
       return {
         type: 'create',
         name: readText(message.name, 'El nombre'),
-        anime: readAnime(message.anime),
+        world: readWorld(message.world),
       };
     case 'join':
       return {
@@ -104,15 +104,15 @@ function readCharacterId(value) {
 }
 
 /**
- * El anime de una sala nueva.
+ * El mundo de una sala nueva.
  *
  * Aquí sí se comprueba que exista, y no solo que tenga forma, al revés que con un
- * personaje: los animes son unos pocos y están en el registro, que es código puro,
+ * personaje: los mundos son unos pocos y están en el registro, que es código puro,
  * así que no hace falta esperar a tener un catálogo delante. Es el criterio 6 de la
  * v4, y vale también para un `create` escrito a mano por el WebSocket.
  */
-function readAnime(value) {
-  if (!isAnimeId(value)) throw new Error('Ese anime no existe');
+function readWorld(value) {
+  if (!isWorldId(value)) throw new Error('Ese mundo no existe');
   return value;
 }
 

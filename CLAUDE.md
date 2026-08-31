@@ -6,7 +6,7 @@ crea la sala: hoy One Piece, Hunter × Hunter y Minecraft.
 
 **La especificación manda.** Léela antes de proponer o escribir nada:
 
-- `docs/ESPEC-V5.md` es lo que se está construyendo ahora: Minecraft, y el anime que
+- `docs/ESPEC-V5.md` es lo que se está construyendo ahora: Minecraft, y el mundo que
   pasa a ser un mundo.
 - `docs/ESPEC-V4.md`, `docs/ESPEC-V3.md` y `docs/ESPEC-V2.md` describen lo anterior,
   también en marcha; sus criterios de aceptación siguen teniendo que cumplirse.

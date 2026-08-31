@@ -14,7 +14,7 @@
  * nombres: el navegador pinta el historial tal cual, sin tener que cruzar nada.
  */
 
-import { findAnime } from './animes.js';
+import { findWorld } from './worlds.js';
 import { opponent } from './state.js';
 
 export function projectView(room, playerId, catalog) {
@@ -31,11 +31,11 @@ export function projectView(room, playerId, catalog) {
     code: room.code,
 
     /**
-     * De qué anime es la sala. No es un secreto —es lo que los dos están mirando— y
+     * De qué mundo es la sala. No es un secreto —es lo que los dos están mirando— y
      * el navegador lo necesita para dos cosas: pedir el catálogo correcto y vestirse
      * con su emblema y sus colores.
      */
-    anime: { id: room.anime, name: findAnime(room.anime)?.name ?? room.anime },
+    world: { id: room.world, name: findWorld(room.world)?.name ?? room.world },
 
     // Sin rival no hay partida que enseñar, aunque las reglas ya estén en 'setup'.
     phase: rival === null ? 'waiting' : game.phase,

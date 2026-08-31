@@ -9,7 +9,7 @@
  * acciones del juego. Quien guarda las salas es el `lobby`.
  */
 
-import { isAnimeId } from '../game/animes.js';
+import { isWorldId } from '../game/worlds.js';
 import { createGame } from '../game/state.js';
 import { isBlank } from '../game/normalize.js';
 
@@ -57,20 +57,20 @@ export function cleanName(name) {
 }
 
 /**
- * Sala recién creada: quien la abre ocupa la plaza 1, con el anime que ha elegido, y
+ * Sala recién creada: quien la abre ocupa la plaza 1, con el mundo que ha elegido, y
  * espera rival.
  *
- * El anime es de la sala y no de cada jugador (sección 4 de la espec v4): quien entra
+ * El mundo es de la sala y no de cada jugador (sección 4 de la espec v4): quien entra
  * con el código lo hereda, y no cambia en toda la vida de la sala, revanchas
  * incluidas. Se comprueba aquí, y no solo al leer el mensaje, porque una sala de un
- * anime que no existe no tendría catálogo con el que validar ni un solo personaje.
+ * mundo que no existe no tendría catálogo con el que validar ni un solo personaje.
  */
-export function createRoom({ code, name, token, anime, now }) {
-  if (!isAnimeId(anime)) throw new Error('Ese anime no existe');
+export function createRoom({ code, name, token, world, now }) {
+  if (!isWorldId(world)) throw new Error('Ese mundo no existe');
 
   return {
     code,
-    anime,
+    world,
     players: { 1: seat(name, token), 2: null },
     game: createGame(),
     score: { 1: 0, 2: 0 },

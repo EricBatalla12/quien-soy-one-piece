@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   confirmsLeaving,
-  dressedAnime,
+  dressedWorld,
   initialModel,
   reconnected,
   receive,
@@ -171,26 +171,26 @@ test('con el rival sentado se pregunta antes de salir; esperando solo, no', () =
 });
 
 // ---------------------------------------------------------------------------
-// De qué anime se viste la pantalla (v4)
+// De qué mundo se viste la pantalla (v4)
 // ---------------------------------------------------------------------------
 
-test('fuera de una sala manda el anime que llevas señalado', () => {
-  assert.equal(dressedAnime(null, 'hunter-x-hunter'), 'hunter-x-hunter');
+test('fuera de una sala manda el mundo que llevas señalado', () => {
+  assert.equal(dressedWorld(null, 'hunter-x-hunter'), 'hunter-x-hunter');
 });
 
 // Criterio 3: quien entra con el código no elige, y lo que llevara señalado antes no
-// puede colarse por encima del anime de la sala.
+// puede colarse por encima del mundo de la sala.
 test('dentro de una sala manda el suyo, se hubiera señalado el que fuera', () => {
-  const view = { anime: { id: 'hunter-x-hunter', name: 'Hunter × Hunter' } };
+  const view = { world: { id: 'hunter-x-hunter', name: 'Hunter × Hunter' } };
 
-  assert.equal(dressedAnime(view, 'one-piece'), 'hunter-x-hunter');
+  assert.equal(dressedWorld(view, 'one-piece'), 'hunter-x-hunter');
 });
 
-// Es también lo que hace que salir de una sala no te devuelva al anime de por
+// Es también lo que hace que salir de una sala no te devuelva al mundo de por
 // defecto: al entrar, el suyo pasa a ser el que llevas señalado, y al salir sigue.
-test('el anime de la sala se queda señalado cuando te quedas sin sala', () => {
-  const view = { anime: { id: 'hunter-x-hunter', name: 'Hunter × Hunter' } };
-  const remembered = dressedAnime(view, 'one-piece');
+test('el mundo de la sala se queda señalado cuando te quedas sin sala', () => {
+  const view = { world: { id: 'hunter-x-hunter', name: 'Hunter × Hunter' } };
+  const remembered = dressedWorld(view, 'one-piece');
 
-  assert.equal(dressedAnime(null, remembered), 'hunter-x-hunter');
+  assert.equal(dressedWorld(null, remembered), 'hunter-x-hunter');
 });

@@ -9,10 +9,10 @@ function wire(message) {
 }
 
 test('las acciones buenas pasan y salen limpias', () => {
-  assert.deepEqual(readMessage(wire({ type: 'create', name: '  Eric  ', anime: 'one-piece' })), {
+  assert.deepEqual(readMessage(wire({ type: 'create', name: '  Eric  ', world: 'one-piece' })), {
     type: 'create',
     name: 'Eric',
-    anime: 'one-piece',
+    world: 'one-piece',
   });
   assert.deepEqual(readMessage(wire({ type: 'join', code: 'nakam', name: 'Nami' })), {
     type: 'join',
@@ -46,7 +46,7 @@ test('una acción inventada se rechaza', () => {
 test('los textos vacíos no pasan, y el error dice cuál', () => {
   assert.throws(() => readMessage(wire({ type: 'ask', text: '   ' })), /pregunta no puede/);
   assert.throws(
-    () => readMessage(wire({ type: 'create', name: 42, anime: 'one-piece' })),
+    () => readMessage(wire({ type: 'create', name: 42, world: 'one-piece' })),
     /nombre no puede/,
   );
 });
@@ -118,20 +118,20 @@ test('se distingue entrar en una sala de jugar dentro de ella', () => {
   }
 });
 
-// Criterio 6 de la v4: una sala de un anime que no existe se rechaza en la puerta,
+// Criterio 6 de la v4: una sala de un mundo que no existe se rechaza en la puerta,
 // también si el `create` se escribe a mano por el WebSocket.
-test('crear una sala de un anime inventado no cuela', () => {
+test('crear una sala de un mundo inventado no cuela', () => {
   for (const bad of [undefined, null, 42, '', 'naruto', 'One Piece', '__proto__']) {
     assert.throws(
-      () => readMessage(wire({ type: 'create', name: 'Eric', anime: bad })),
-      /anime no existe/,
-      `${JSON.stringify(bad)} no debería valer como anime`,
+      () => readMessage(wire({ type: 'create', name: 'Eric', world: bad })),
+      /mundo no existe/,
+      `${JSON.stringify(bad)} no debería valer como mundo`,
     );
   }
 });
 
-test('los dos animes de la v4 sí pasan', () => {
-  for (const anime of ['one-piece', 'hunter-x-hunter']) {
-    assert.equal(readMessage(wire({ type: 'create', name: 'Eric', anime })).anime, anime);
+test('los dos mundos de la v4 sí pasan', () => {
+  for (const world of ['one-piece', 'hunter-x-hunter']) {
+    assert.equal(readMessage(wire({ type: 'create', name: 'Eric', world })).world, world);
   }
 });

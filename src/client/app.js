@@ -90,14 +90,14 @@ export function confirmsLeaving(view) {
 }
 
 /**
- * De qué anime se viste la pantalla, y de cuál hay que pedir el catálogo.
+ * De qué mundo se viste la pantalla, y de cuál hay que pedir el catálogo.
  *
  * Dentro de una sala manda el de la sala, que ya no se elige: quien entró con el
  * código no lo eligió y quien la creó ya no puede cambiarlo. Fuera, el que lleves
  * señalado en la pantalla de entrada, para verlo antes de crear nada.
  */
-export function dressedAnime(view, chosen) {
-  return view === null ? chosen : view.anime.id;
+export function dressedWorld(view, chosen) {
+  return view === null ? chosen : view.world.id;
 }
 
 /** Se acaba de mandar una acción: se limpia el error anterior. */

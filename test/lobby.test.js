@@ -12,11 +12,11 @@ const CATALOG = createCatalog([
   { id: 'sanji', name: 'Sanji' },
 ]);
 
-/** Y otro, de otro anime, para comprobar que cada sala usa el suyo. */
+/** Y otro, de otro mundo, para comprobar que cada sala usa el suyo. */
 const OTHER = createCatalog([{ id: 'gon-freecss', name: 'Gon Freecss' }]);
 
 const CATALOGS = {
-  of: (anime) => (anime === 'hunter-x-hunter' ? OTHER : CATALOG),
+  of: (world) => (world === 'hunter-x-hunter' ? OTHER : CATALOG),
 };
 
 /**
@@ -236,7 +236,7 @@ function sequence(values) {
 
 // Criterio 5: el servidor rechaza un personaje que no esté en el catálogo DE ESA
 // SALA. Gon existe, pero no en una sala de One Piece.
-test('cada sala valida los personajes contra el catálogo de su anime', () => {
+test('cada sala valida los personajes contra el catálogo de su mundo', () => {
   const { lobby } = fakeLobby();
   const pirates = lobby.open('Eric', 'one-piece');
   lobby.join(pirates.code, 'Nami');
@@ -256,11 +256,11 @@ test('cada sala valida los personajes contra el catálogo de su anime', () => {
   assert.equal(lobby.view(hunters.code, 1).chosenForRival, 'Gon Freecss');
 });
 
-test('la vista de cada sala dice su anime', () => {
+test('la vista de cada sala dice su mundo', () => {
   const { lobby } = fakeLobby();
   const pirates = lobby.open('Eric', 'one-piece');
   const hunters = lobby.open('Gon', 'hunter-x-hunter');
 
-  assert.equal(lobby.view(pirates.code, 1).anime.id, 'one-piece');
-  assert.equal(lobby.view(hunters.code, 1).anime.id, 'hunter-x-hunter');
+  assert.equal(lobby.view(pirates.code, 1).world.id, 'one-piece');
+  assert.equal(lobby.view(hunters.code, 1).world.id, 'hunter-x-hunter');
 });

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ANIMES, catalogPath, findAnime } from '../src/game/animes.js';
+import { WORLDS, catalogPath, findWorld } from '../src/game/worlds.js';
 import { buildCatalog, createCatalog } from '../src/game/catalog.js';
 import { serializeCatalog } from '../scripts/build-catalog.js';
 
@@ -19,27 +19,27 @@ import { serializeCatalog } from '../scripts/build-catalog.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
-function fileOf(anime) {
-  return readFileSync(join(root, catalogPath(anime.id)), 'utf8');
+function fileOf(world) {
+  return readFileSync(join(root, catalogPath(world.id)), 'utf8');
 }
 
-test('cada anime del registro tiene su fichero de personajes y se puede leer', () => {
-  for (const anime of ANIMES) {
-    const catalog = createCatalog(JSON.parse(fileOf(anime)));
+test('cada mundo del registro tiene su fichero de personajes y se puede leer', () => {
+  for (const world of WORLDS) {
+    const catalog = createCatalog(JSON.parse(fileOf(world)));
 
-    assert.ok(catalog.size > 0, `${anime.name} no tiene ningún personaje`);
+    assert.ok(catalog.size > 0, `${world.name} no tiene ningún personaje`);
   }
 });
 
 // Criterio 10 de la v4, que es el 11 de la v3 aplicado a todos los catálogos.
 test('ningún catálogo repite nombres ni los deja vacíos', () => {
-  for (const anime of ANIMES) {
-    const names = JSON.parse(fileOf(anime)).map((entry) => entry.name);
+  for (const world of WORLDS) {
+    const names = JSON.parse(fileOf(world)).map((entry) => entry.name);
 
-    assert.equal(new Set(names).size, names.length, `${anime.name} repite algún nombre`);
+    assert.equal(new Set(names).size, names.length, `${world.name} repite algún nombre`);
     assert.ok(
       names.every((name) => name.trim() !== ''),
-      `${anime.name} tiene algún nombre vacío`,
+      `${world.name} tiene algún nombre vacío`,
     );
   }
 });
@@ -50,29 +50,29 @@ test('ningún catálogo repite nombres ni los deja vacíos', () => {
  * es el alfabético y no hay repetidos, lo haya generado un script o una persona.
  */
 test('cada catálogo es el que da construirlo desde sus nombres', () => {
-  for (const anime of ANIMES) {
-    const entries = JSON.parse(fileOf(anime));
+  for (const world of WORLDS) {
+    const entries = JSON.parse(fileOf(world));
 
     assert.deepEqual(
       entries,
       buildCatalog(entries.map((entry) => entry.name)),
-      `${anime.name}: revisa identificadores, orden y repetidos`,
+      `${world.name}: revisa identificadores, orden y repetidos`,
     );
   }
 });
 
 /** Un personaje por línea, para que el diff de un catálogo se pueda leer. */
 test('cada catálogo está escrito con un personaje por línea', () => {
-  for (const anime of ANIMES) {
-    const text = fileOf(anime);
+  for (const world of WORLDS) {
+    const text = fileOf(world);
 
-    assert.equal(text, serializeCatalog(JSON.parse(text)), `${anime.name} está mal formateado`);
+    assert.equal(text, serializeCatalog(JSON.parse(text)), `${world.name} está mal formateado`);
   }
 });
 
-test('los personajes de un anime no se cuelan en el catálogo de otro', () => {
-  const onePiece = createCatalog(JSON.parse(fileOf(findAnime('one-piece'))));
-  const hunter = createCatalog(JSON.parse(fileOf(findAnime('hunter-x-hunter'))));
+test('los personajes de un mundo no se cuelan en el catálogo de otro', () => {
+  const onePiece = createCatalog(JSON.parse(fileOf(findWorld('one-piece'))));
+  const hunter = createCatalog(JSON.parse(fileOf(findWorld('hunter-x-hunter'))));
 
   assert.ok(onePiece.has('monkey-d-luffy'));
   assert.ok(!hunter.has('monkey-d-luffy'));

@@ -11,7 +11,7 @@
  * los dos digan.
  */
 
-import { ANIMES, DEFAULT_ANIME, findAnime } from '../../game/animes.js';
+import { WORLDS, DEFAULT_WORLD, findWorld } from '../../game/worlds.js';
 import { highlightIndex, isChosen } from '../picker.js';
 
 /**
@@ -37,13 +37,13 @@ export function answerKey(answer) {
 }
 
 /**
- * El medallón de la cabecera: el emblema del anime que se esté mirando.
+ * El medallón de la cabecera: el emblema del mundo que se esté mirando.
  *
- * El dibujo no está aquí desde la v4 —vive en el registro, uno por anime— porque
+ * El dibujo no está aquí desde la v4 —vive en el registro, uno por mundo— porque
  * jugar a Hunter × Hunter con la calavera de los Sombrero de Paja no tenía sentido.
  */
-function emblemOf(anime) {
-  return findAnime(anime)?.emblem ?? '';
+function emblemOf(world) {
+  return findWorld(world)?.emblem ?? '';
 }
 
 /** Un selector en blanco, para no obligar a quien solo quiere pintar una pantalla. */
@@ -56,7 +56,7 @@ const EMPTY_PICKER = { query: '', chosenId: null, highlight: 0 };
  * `catalog` es la lista de personajes, o null mientras se está descargando.
  * `picker` es qué has escrito y qué has elegido en el selector.
  * `leaving` es si has pulsado salir y falta confirmarlo.
- * `anime` es el que llevas elegido en la pantalla de entrada; dentro de una sala
+ * `mundo` es el que llevas elegido en la pantalla de entrada; dentro de una sala
  * manda el suyo, que llega en la vista y no se puede cambiar.
  */
 export function render({
@@ -67,17 +67,17 @@ export function render({
   catalog = null,
   picker = EMPTY_PICKER,
   leaving = false,
-  anime = DEFAULT_ANIME,
+  world = DEFAULT_WORLD,
 }) {
   return `
     <header>
-      ${emblemOf(anime)}
+      ${emblemOf(world)}
       <h1>¿Quién soy?</h1>
       <p class="player">${headerLine(view)}</p>
     </header>
     ${connectionNotice(status)}
     ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
-    ${view === null ? entryScreen(anime) : roomScreen(view, { clues, catalog, picker, leaving })}
+    ${view === null ? entryScreen(world) : roomScreen(view, { clues, catalog, picker, leaving })}
   `;
 }
 
@@ -85,17 +85,17 @@ export function render({
 function headerLine(view) {
   if (view === null) return 'Dos jugadores, dos secretos';
 
-  // El anime, el código y el marcador van en pastillas: son los datos que se buscan
-  // de un vistazo, y sueltos en la línea se perdían entre los nombres. El anime va
+  // El mundo, el código y el marcador van en pastillas: son los datos que se buscan
+  // de un vistazo, y sueltos en la línea se perdían entre los nombres. El mundo va
   // el primero porque es lo que quien acaba de entrar con el código no ha elegido
   // (criterio 3 de la v4).
-  const anime = `<span class="pill anime">${escapeHtml(view.anime.name)}</span>`;
+  const world = `<span class="pill world">${escapeHtml(view.world.name)}</span>`;
   const room = `<span class="pill room">${escapeHtml(view.code)}</span>`;
   const you = escapeHtml(view.you.name);
-  if (view.rival === null) return `${you} ${anime} ${room}`;
+  if (view.rival === null) return `${you} ${world} ${room}`;
 
   const score = `<span class="pill score">${view.score[view.you.id]}–${view.score[view.rival.id]}</span>`;
-  return `${you} contra ${escapeHtml(view.rival.name)} ${anime} ${room} ${score}`;
+  return `${you} contra ${escapeHtml(view.rival.name)} ${world} ${room} ${score}`;
 }
 
 function connectionNotice(status) {
@@ -111,7 +111,7 @@ function connectionNotice(status) {
 
 function entryScreen(chosen) {
   return `
-    ${animeChooser(chosen)}
+    ${worldChooser(chosen)}
     <section>
       <h2>La sala</h2>
       <p>
@@ -134,7 +134,7 @@ function entryScreen(chosen) {
 }
 
 /**
- * Con qué anime se juega, que se elige antes de crear la sala.
+ * Con qué mundo se juega, que se elige antes de crear la sala.
  *
  * Solo lo elige quien crea: quien entra con un código hereda el de la sala
  * (sección 4 de la espec v4), y se dice aquí para que no se busque dónde cambiarlo.
@@ -143,27 +143,27 @@ function entryScreen(chosen) {
  * de un vistazo con su emblema y su línea de presentación. `aria-pressed` es lo que
  * le cuenta a un lector de pantalla cuál está elegido.
  *
- * Cada botón lleva el `data-anime` de su anime, y el CSS cuelga los colores de ese
+ * Cada botón lleva el `data-world` de su mundo, y el CSS cuelga los colores de ese
  * atributo: así el emblema de cada uno se pinta con **sus** colores aunque la página
  * esté vestida del otro, sin que esto tenga que saber nada de temas.
  */
-function animeChooser(chosen) {
-  const options = ANIMES.map(
-    (anime) => `<li>
-      <button type="button" class="anime${anime.id === chosen ? ' on' : ''}"
-        data-anime="${escapeHtml(anime.id)}" aria-pressed="${anime.id === chosen}">
-        ${anime.emblem}
-        <span class="anime-name">${escapeHtml(anime.name)}</span>
-        <span class="anime-tagline">${escapeHtml(anime.tagline)}</span>
+function worldChooser(chosen) {
+  const options = WORLDS.map(
+    (world) => `<li>
+      <button type="button" class="world${world.id === chosen ? ' on' : ''}"
+        data-world="${escapeHtml(world.id)}" aria-pressed="${world.id === chosen}">
+        ${world.emblem}
+        <span class="world-name">${escapeHtml(world.name)}</span>
+        <span class="world-tagline">${escapeHtml(world.tagline)}</span>
       </button>
     </li>`,
   ).join('');
 
   return `
-    <section class="animes">
+    <section class="worlds">
       <h2>¿A qué jugáis?</h2>
-      <ul class="anime-list">${options}</ul>
-      <p class="animes-note">
+      <ul class="world-list">${options}</ul>
+      <p class="worlds-note">
         Lo elige quien crea la sala; quien entre con el código juega al mismo.
       </p>
     </section>

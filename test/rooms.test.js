@@ -36,7 +36,7 @@ function fullRoom() {
     code: 'NAKAM',
     name: 'Eric',
     token: 't1',
-    anime: 'one-piece',
+    world: 'one-piece',
     now: NOW,
   });
   return joinRoom(room, { name: 'Nami', token: 't2', now: NOW });
@@ -104,7 +104,7 @@ test('el nombre se limpia y se recorta al tope', () => {
 // ---------------------------------------------------------------------------
 
 test('quien crea la sala ocupa la plaza 1 y espera rival', () => {
-  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
+  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW });
 
   assert.equal(room.players[1].name, 'Eric');
   assert.equal(room.players[2], null);
@@ -125,7 +125,7 @@ test('un tercero no entra en una sala llena', () => {
 });
 
 test('entrar no toca la sala que recibe', () => {
-  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
+  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW });
   joinRoom(room, { name: 'Nami', token: 't2', now: NOW });
 
   assert.equal(room.players[2], null);
@@ -151,7 +151,7 @@ test('un token que no es de nadie no abre ninguna plaza', () => {
 });
 
 test('el token de una plaza vacía no existe', () => {
-  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
+  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW });
   assert.equal(playerIdByToken(room, undefined), null);
 });
 
@@ -168,7 +168,7 @@ test('desconectarse deja la plaza marcada, no libre', () => {
 });
 
 test('no se puede conectar a una plaza que no existe', () => {
-  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
+  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW });
   assert.throws(() => setConnected(room, 2, true, NOW), /libre/);
 });
 
@@ -204,7 +204,7 @@ test('no hay revancha de una partida sin terminar', () => {
 
 test('no hay revancha sin rival', () => {
   const alone = withGame(
-    createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW }),
+    createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW }),
     wonGame(1),
     NOW,
   );
@@ -217,7 +217,7 @@ test('no hay revancha sin rival', () => {
 // ---------------------------------------------------------------------------
 
 test('una sala que espera rival caduca al agotarse el plazo', () => {
-  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
+  const room = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW });
 
   assert.ok(!hasExpired(room, NOW + ROOM_TTL_MS));
   assert.ok(hasExpired(room, NOW + ROOM_TTL_MS + 1));
@@ -249,40 +249,40 @@ test('jugar reinicia el plazo', () => {
 });
 
 // ---------------------------------------------------------------------------
-// El anime de la sala (v4)
+// El mundo de la sala (v4)
 // ---------------------------------------------------------------------------
 
-test('la sala guarda el anime con el que se creó', () => {
+test('la sala guarda el mundo con el que se creó', () => {
   const room = createRoom({
     code: 'NAKAM',
     name: 'Eric',
     token: 't1',
-    anime: 'hunter-x-hunter',
+    world: 'hunter-x-hunter',
     now: NOW,
   });
 
-  assert.equal(room.anime, 'hunter-x-hunter');
+  assert.equal(room.world, 'hunter-x-hunter');
 });
 
 // Criterio 2: la sala lo conserva al entrar el rival y en las revanchas.
-test('el anime no cambia al entrar el rival ni en la revancha', () => {
+test('el mundo no cambia al entrar el rival ni en la revancha', () => {
   const room = joinRoom(
-    createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'hunter-x-hunter', now: NOW }),
+    createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'hunter-x-hunter', now: NOW }),
     { name: 'Nami', token: 't2', now: NOW },
   );
 
-  assert.equal(room.anime, 'hunter-x-hunter');
-  assert.equal(rematch(withGame(room, wonGame(2), NOW), NOW).anime, 'hunter-x-hunter');
+  assert.equal(room.world, 'hunter-x-hunter');
+  assert.equal(rematch(withGame(room, wonGame(2), NOW), NOW).world, 'hunter-x-hunter');
 });
 
-// Criterio 6: una sala de un anime que no existe no llega a nacer, porque no habría
+// Criterio 6: una sala de un mundo que no existe no llega a nacer, porque no habría
 // catálogo con el que validar un solo personaje.
-test('no se puede crear una sala de un anime que no existe', () => {
+test('no se puede crear una sala de un mundo que no existe', () => {
   for (const bad of [undefined, null, '', 'naruto', 'One Piece', '__proto__']) {
     assert.throws(
-      () => createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: bad, now: NOW }),
-      /anime no existe/,
-      `${JSON.stringify(bad)} no debería valer como anime`,
+      () => createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: bad, now: NOW }),
+      /mundo no existe/,
+      `${JSON.stringify(bad)} no debería valer como mundo`,
     );
   }
 });

@@ -16,7 +16,7 @@ const CATALOG = createCatalog([
 ]);
 
 function fullRoom() {
-  return joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW }), {
+  return joinRoom(createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW }), {
     name: 'Nami',
     token: 't2',
     now: NOW,
@@ -79,7 +79,7 @@ test('no puedes responderte a ti mismo', () => {
 });
 
 test('no se juega hasta que hay rival', () => {
-  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', anime: 'one-piece', now: NOW });
+  const alone = createRoom({ code: 'NAKAM', name: 'Eric', token: 't1', world: 'one-piece', now: NOW });
 
   assert.throws(() => act(alone, 1, { type: 'secret', characterId: 'roronoa-zoro' }), /rival/);
 });

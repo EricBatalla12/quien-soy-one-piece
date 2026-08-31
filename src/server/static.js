@@ -10,23 +10,23 @@
  * directorio se pueden testear sin levantar nada.
  */
 
-import { ANIMES, catalogPath } from '../game/animes.js';
+import { WORLDS, catalogPath } from '../game/worlds.js';
 
 /**
  * Ficheros sueltos que se sirven tal cual.
  *
- * Además del juego, el catálogo de cada anime y las tres piezas puras que el
- * navegador necesita: el registro de animes para la pantalla de entrada, y las dos
+ * Además del juego, el catálogo de cada mundo y las tres piezas puras que el
+ * navegador necesita: el registro de mundos para la pantalla de entrada, y las dos
  * que buscan en un catálogo. Se nombran una a una en vez de abrir `src/game/`: ahí
  * también viven las reglas y la vista, que son cosa del servidor.
  *
- * Los catálogos salen del registro y no de una lista escrita aquí: añadir un anime no
+ * Los catálogos salen del registro y no de una lista escrita aquí: añadir un mundo no
  * puede exigir acordarse de publicar su fichero (criterio 8 de la espec v4).
  */
 const PUBLIC_FILES = [
   'index.html',
-  ...ANIMES.map((anime) => catalogPath(anime.id)),
-  'src/game/animes.js',
+  ...WORLDS.map((world) => catalogPath(world.id)),
+  'src/game/worlds.js',
   'src/game/catalog.js',
   'src/game/normalize.js',
 ];

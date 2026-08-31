@@ -10,14 +10,14 @@
 
 import {
   confirmsLeaving,
-  dressedAnime,
+  dressedWorld,
   initialModel,
   reconnected,
   receive,
   sending,
   withStatus,
 } from './app.js';
-import { DEFAULT_ANIME, catalogPath } from '../game/animes.js';
+import { DEFAULT_WORLD, catalogPath } from '../game/worlds.js';
 import { createCatalog } from '../game/catalog.js';
 import { isPinned, moveClue, noClues, pinClue, unpinClue } from './clues.js';
 import { chosen, highlighted, moveHighlight, noPicker, searching } from './picker.js';
@@ -39,21 +39,21 @@ const app = document.getElementById('app');
 let model = initialModel();
 
 /**
- * Los catálogos ya descargados: anime → catálogo, y un catálogo vacío si no se ha
+ * Los catálogos ya descargados: mundo → catálogo, y un catálogo vacío si no se ha
  * podido. Viven aquí y no en el modelo porque no vienen del servidor de partidas ni
  * cambian durante el juego.
  *
  * Se piden por HTTP y no por el WebSocket (sección 6.2 de la espec v4), y **no al
  * arrancar**: hasta estar dentro de una sala no se sabe cuál hace falta. Volver a
- * entrar en una sala del mismo anime no lo vuelve a descargar.
+ * entrar en una sala del mismo mundo no lo vuelve a descargar.
  */
 const catalogs = new Map();
 
 /** Los que se están pidiendo ahora mismo, para no pedir el mismo dos veces. */
 const pending = new Set();
 
-/** Con qué anime se va a crear la sala. Dentro de una sala manda el de la sala. */
-let chosenAnime = DEFAULT_ANIME;
+/** Con qué mundo se va a crear la sala. Dentro de una sala manda el de la sala. */
+let chosenWorld = DEFAULT_WORLD;
 
 /** Qué has escrito y qué has elegido en el selector de personaje. */
 let picker = noPicker();
@@ -93,26 +93,26 @@ const connection = connect({
 paint();
 
 /**
- * El catálogo de un anime, del servidor web y no del de partidas.
+ * El catálogo de un mundo, del servidor web y no del de partidas.
  *
  * Si falla, el juego sigue funcionando en todo lo demás —se puede crear sala, entrar
  * y ver el historial— y el selector dice que no ha podido cargarse. Un catálogo
  * vacío es justo eso: no hay a quién elegir.
  */
-async function loadCatalog(anime) {
-  if (catalogs.has(anime) || pending.has(anime)) return;
-  pending.add(anime);
+async function loadCatalog(world) {
+  if (catalogs.has(world) || pending.has(world)) return;
+  pending.add(world);
 
   try {
-    const response = await fetch(catalogPath(anime));
+    const response = await fetch(catalogPath(world));
     if (!response.ok) throw new Error(`el servidor ha contestado ${response.status}`);
 
-    catalogs.set(anime, createCatalog(await response.json()));
+    catalogs.set(world, createCatalog(await response.json()));
   } catch (cause) {
-    console.error(`No se ha podido cargar el catálogo de ${anime}:`, cause);
-    catalogs.set(anime, createCatalog([]));
+    console.error(`No se ha podido cargar el catálogo de ${world}:`, cause);
+    catalogs.set(world, createCatalog([]));
   } finally {
-    pending.delete(anime);
+    pending.delete(world);
   }
 
   paint();
@@ -143,13 +143,13 @@ function handle(message) {
   applyToSession(session);
   loadClues();
 
-  // Al entrar en una sala su anime pasa a ser el que llevas señalado, así que al
+  // Al entrar en una sala su mundo pasa a ser el que llevas señalado, así que al
   // salir —o al cerrártela el rival— la pantalla de entrada sigue en el que jugabas
   // y no te devuelve al de por defecto. Fuera de una sala no cambia nada.
-  chosenAnime = dressedAnime(model.view, chosenAnime);
+  chosenWorld = dressedWorld(model.view, chosenWorld);
 
   // El catálogo se pide al entrar en la sala, que es cuando se sabe cuál hace falta.
-  if (model.view !== null) loadCatalog(chosenAnime);
+  if (model.view !== null) loadCatalog(chosenWorld);
 
   paint();
 }
@@ -200,18 +200,18 @@ function paint() {
   const typed = captureTyping();
   const scrolled = captureScroll();
 
-  // El anime viste la página entera —el fondo es del `body`—, así que se marca ahí y
+  // El mundo viste la página entera —el fondo es del `body`—, así que se marca ahí y
   // el bloque de color que le toca manda sobre el de por defecto.
-  const anime = dressedAnime(model.view, chosenAnime);
-  document.body.dataset.anime = anime;
+  const world = dressedWorld(model.view, chosenWorld);
+  document.body.dataset.world = world;
 
   app.innerHTML = render({
     ...model,
     clues,
-    catalog: catalogs.get(anime) ?? null,
+    catalog: catalogs.get(world) ?? null,
     picker,
     leaving,
-    anime,
+    world,
   });
 
   restoreTyping(typed);
@@ -290,7 +290,7 @@ app.addEventListener('submit', (event) => {
     // El nombre se escribe una sola vez y vale para crear y para entrar, así que se
     // lee del campo y no del formulario que se acaba de enviar.
     case 'create-form':
-      send({ type: 'create', name: valueOf('#name-input'), anime: chosenAnime });
+      send({ type: 'create', name: valueOf('#name-input'), world: chosenWorld });
       break;
     case 'join-form':
       send({ type: 'join', code: valueOf('#code-input'), name: valueOf('#name-input') });
@@ -340,7 +340,7 @@ app.addEventListener('input', (event) => {
 app.addEventListener('keydown', (event) => {
   if (!isSearchField(event.target)) return;
 
-  const catalog = catalogs.get(dressedAnime(model.view, chosenAnime)) ?? null;
+  const catalog = catalogs.get(dressedWorld(model.view, chosenWorld)) ?? null;
   const matches = catalog === null ? [] : catalog.search(picker.query).matches;
 
   switch (event.key) {
@@ -387,12 +387,12 @@ app.addEventListener('click', (event) => {
   const button = event.target.closest('button');
   if (button === null) return;
 
-  const { answer, anime, pin, move, unpick } = button.dataset;
+  const { answer, world, pin, move, unpick } = button.dataset;
 
-  // Elegir anime en la pantalla de entrada: cambia lo que se va a crear y cómo se
+  // Elegir mundo en la pantalla de entrada: cambia lo que se va a crear y cómo se
   // ve la página, y no manda nada al servidor hasta que se crea la sala.
-  if (anime !== undefined) {
-    chosenAnime = anime;
+  if (world !== undefined) {
+    chosenWorld = world;
     paint();
     return;
   }

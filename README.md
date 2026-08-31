@@ -2,19 +2,19 @@
 
 Juego web de "¿Quién soy?" para dos jugadores, con personajes de anime.
 
-Se elige con qué anime jugáis —**One Piece** o **Hunter × Hunter**— y cada jugador
-elige en secreto, de la lista de ese anime, el personaje que su rival deberá adivinar.
+Se elige con qué mundo jugáis —**One Piece** o **Hunter × Hunter**— y cada jugador
+elige en secreto, de la lista de ese mundo, el personaje que su rival deberá adivinar.
 Por turnos, se hacen preguntas que se responden con **Sí**, **No** o **A veces**,
 hasta que alguien se atreve a arriesgar un personaje.
 
 Uno crea la sala, le dicta el código de cinco letras a la otra persona, y a jugar.
-Podéis estar en ordenadores distintos. El anime lo elige quien crea la sala y quien
+Podéis estar en ordenadores distintos. El mundo lo elige quien crea la sala y quien
 entra con el código juega al mismo. De la sala se sale cuando quieras: se cierra para
 los dos y se vuelve a la pantalla de entrada.
 
 ## Estado
 
-✅ **v4 terminada.** El juego deja de ser solo One Piece. Se elige el anime antes de
+✅ **v4 terminada.** El juego deja de ser solo One Piece. Se elige el mundo antes de
 crear la sala, entra **Hunter × Hunter** con 120 personajes escritos a mano, y cada
 uno tiene su emblema y sus colores. Añadir un tercero es añadir datos: su lista de
 personajes, su entrada en el registro y su bloque de colores.
@@ -77,10 +77,10 @@ contestan.
 
 | Capa | Qué hace |
 |---|---|
-| `src/game/` | Reglas, el registro de animes, los catálogos y la vista de cada jugador |
+| `src/game/` | Reglas, el registro de mundos, los catálogos y la vista de cada jugador |
 | `src/server/` | Salas, validación de lo que llega, y el servidor HTTP + WebSocket |
 | `src/client/` | Conexión, sesión de la pestaña, selector de personaje e interfaz |
-| `data/` | Un catálogo de personajes por anime, y las correcciones a sus nombres |
+| `data/` | Un catálogo de personajes por mundo, y las correcciones a sus nombres |
 | `scripts/` | El script que genera el catálogo de One Piece |
 
 Los catálogos son ficheros del repositorio, no llamadas a una API: el juego no sale a
@@ -90,17 +90,17 @@ en [`data/one-piece-corrections.json`](data/one-piece-corrections.json) para que
 regenerarlo no las pierda. El de Hunter × Hunter está escrito a mano y no tiene script
 detrás; una prueba comprueba que cumple las mismas reglas que el otro.
 
-### Añadir un anime
+### Añadir un mundo
 
 Tres cosas, y ninguna es código de reglas:
 
-1. **Su lista de personajes** en `data/<anime>.json`, con un `{"id","name"}` por línea.
+1. **Su lista de personajes** en `data/<mundo>.json`, con un `{"id","name"}` por línea.
    El identificador sale del nombre; si te equivocas, `npm test` te lo dice.
-2. **Su entrada en el registro**, [`src/game/animes.js`](src/game/animes.js): nombre,
+2. **Su entrada en el registro**, [`src/game/worlds.js`](src/game/worlds.js): nombre,
    una línea que lo presente y su emblema en SVG, dibujado con las clases del tema
    (`bone`, `ink`, `accent`, `hot`) y sin colores propios.
 3. **Su bloque de colores** en [`styles/main.css`](styles/main.css), colgando de
-   `[data-anime='<anime>']`.
+   `[data-world='<mundo>']`.
 
 Ni las salas, ni las reglas, ni los mensajes que van por el cable cambian.
 
