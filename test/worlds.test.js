@@ -6,11 +6,12 @@ import { WORLDS, DEFAULT_WORLD, catalogPath, findWorld, isWorldId } from '../src
 // El registro es la única lista de mundos que hay (sección 5.1 de la espec v4), así
 // que lo que se comprueba aquí vale para el servidor, el navegador y los ficheros.
 
-test('hay al menos los dos mundos de la v4', () => {
+test('están los tres mundos que hay hasta la v5', () => {
   const ids = WORLDS.map((world) => world.id);
 
   assert.ok(ids.includes('one-piece'));
   assert.ok(ids.includes('hunter-x-hunter'));
+  assert.ok(ids.includes('minecraft'));
 });
 
 test('ningún mundo repite identificador', () => {

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { WORLDS } from '../src/game/worlds.js';
 import { MAX_TEXT_LENGTH, isEntryType, readMessage } from '../src/server/protocol.js';
 
 /** Como llega de verdad: texto, no objeto. */
@@ -130,8 +131,8 @@ test('crear una sala de un mundo inventado no cuela', () => {
   }
 });
 
-test('los dos mundos de la v4 sí pasan', () => {
-  for (const world of ['one-piece', 'hunter-x-hunter']) {
+test('los mundos del registro sí pasan', () => {
+  for (const world of WORLDS.map((w) => w.id)) {
     assert.equal(readMessage(wire({ type: 'create', name: 'Eric', world })).world, world);
   }
 });

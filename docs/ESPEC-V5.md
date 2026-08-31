@@ -234,6 +234,7 @@ Por piezas pequeñas, un commit por pieza, cada una con sus tests:
    cambios de comportamiento, en su propio commit.
 2. La palabra de cada mundo: el campo en el registro y los cinco sitios que la usan.
 3. El script que trae los items y sus nombres, con su parte pura testeada aparte.
-4. El catálogo de Minecraft, generado y subido.
-5. Minecraft en el registro: su emblema y sus colores.
-6. La documentación: README y `CLAUDE.md`.
+4. Minecraft entero: su catálogo generado, su entrada en el registro, su emblema y sus
+   colores. Va junto y no en dos piezas porque un catálogo que no está en el registro
+   no lo mira ninguna prueba, y un mundo sin colores rompe la que los vigila.
+5. La documentación: README y `CLAUDE.md`.

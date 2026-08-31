@@ -11,7 +11,7 @@
  * jugar a ese mundo (sección 6.1 de la espec v4).
  *
  * Los ficheros están en el repositorio a propósito: con la API apagada o inaccesible
- * el juego arranca y se juega igual, a los dos mundos (criterio 12).
+ * el juego arranca y se juega igual, a todos los mundos (criterio 12 de la v4).
  */
 
 import { readFileSync } from 'node:fs';

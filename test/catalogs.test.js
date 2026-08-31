@@ -79,3 +79,35 @@ test('los personajes de un mundo no se cuelan en el catálogo de otro', () => {
   assert.ok(hunter.has('gon-freecss'));
   assert.ok(!onePiece.has('gon-freecss'));
 });
+
+// ---------------------------------------------------------------------------
+// Minecraft, que se pidió con todos sus items (v5)
+// ---------------------------------------------------------------------------
+
+const MINECRAFT = JSON.parse(fileOf(findWorld('minecraft')));
+
+// Criterio 2: son todos. Si alguna de las costuras de la sección 6.2 se rompiera, el
+// número bajaría sin que nadie se enterase; por eso se comprueba el número exacto.
+test('Minecraft trae sus 1504 objetos, sin el aire', () => {
+  assert.equal(MINECRAFT.length, 1504);
+  assert.ok(!MINECRAFT.some((entry) => entry.name === 'Aire'));
+});
+
+// Criterio 3: en el juego estos comparten nombre y se distinguen por una segunda
+// línea. Sin pegarla, los 48 se quedarían en 3.
+test('los discos, los moldes y los diseños están todos y con su nombre entero', () => {
+  const cuantos = (prefijo) => MINECRAFT.filter((e) => e.name.startsWith(`${prefijo}: `)).length;
+
+  assert.equal(cuantos('Disco de música'), 21);
+  assert.equal(cuantos('Molde de herrería'), 19);
+  assert.equal(cuantos('Diseño de estandarte'), 8);
+});
+
+// Criterio 4: los nombres son los del juego en español, no los ingleses.
+test('los objetos se llaman como en el juego en español', () => {
+  const byId = new Map(MINECRAFT.map((entry) => [entry.id, entry.name]));
+
+  assert.equal(byId.get('espada-de-diamante'), 'Espada de diamante');
+  assert.equal(byId.get('mesa-de-trabajo'), 'Mesa de trabajo');
+  assert.equal(byId.get('polvo-de-redstone'), 'Polvo de redstone');
+});

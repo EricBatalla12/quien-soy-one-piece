@@ -145,6 +145,34 @@ body::before {
     inset 0 0 60px var(--toast);
 }
 
+/* Minecraft: una cueva de tierra y una hoja de arenisca encima. */
+[data-world='minecraft'] {
+  --sea-deep: #1c1109;
+  --sea: #35210f;
+  --sea-light: #5a3a1c;
+  --foam: rgba(255, 255, 255, 0.05);
+
+  --parchment: #efe6d2;
+  --parchment-deep: #d9cbae;
+  --ink: #2f2416;
+  --ink-soft: #5f5140;
+  --ink-pill: #4a3a22;
+
+  --gold: #5fa02f;
+  --gold-light: #8ccc4e;
+  --gold-lighter: #a9e072;
+  --gold-deep: #3f7018;
+  --gold-shadow: #2f5512;
+  --gold-ink: #16290a;
+
+  --title: #7a4a18;
+  --bone: #f3efe2;
+
+  --edge: #b09773;
+  --fibre: rgba(120, 95, 60, 0.05);
+  --toast: rgba(90, 60, 25, 0.18);
+}
+
 /* --- Cabecera ----------------------------------------------------------- */
 
 header {
@@ -194,6 +222,12 @@ header {
 }
 .emblem .accent-deep {
   fill: var(--gold);
+  stroke: var(--gold-deep);
+  stroke-width: 1.5;
+}
+/* La cara en sombra de un cuerpo con volumen: el tercer tono del acento. */
+.emblem .accent-dark {
+  fill: var(--gold-shadow);
   stroke: var(--gold-deep);
   stroke-width: 1.5;
 }

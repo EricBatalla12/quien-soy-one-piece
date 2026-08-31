@@ -65,6 +65,26 @@ const HUNTER_LICENCE = `
 `;
 
 /**
+ * Bloque de tierra en isométrica: tres caras y unos píxeles encima.
+ *
+ * Un cubo en perspectiva es geometría, no el dibujo de nadie, y es lo que dice
+ * "Minecraft" sin copiar ni una textura. Los píxeles de la cara de arriba son lo que
+ * lo separa de un cubo cualquiera.
+ */
+const DIRT_BLOCK = `
+  <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
+    <path class="accent-dark" d="M50 50 L82 34 L82 66 L50 82 Z" />
+    <path class="accent-deep" d="M18 34 L50 50 L50 82 L18 66 Z" />
+    <path class="accent" d="M50 18 L82 34 L50 50 L18 34 Z" />
+    <g class="bone">
+      <path d="M42 26 L50 30 L42 34 L34 30 Z" />
+      <path d="M58 26 L66 30 L58 34 L50 30 Z" />
+      <path d="M50 34 L58 38 L50 42 L42 38 Z" />
+    </g>
+  </svg>
+`;
+
+/**
  * Los mundos, en el orden en que se ofrecen. El primero es el que viene elegido.
  *
  * `noun` es cómo se llama lo que hay dentro, en singular: en One Piece se adivina un
@@ -92,6 +112,13 @@ export const WORLDS = [
     tagline: 'Cazadores, nen y un examen del que no vuelven todos',
     noun: 'personaje',
     emblem: HUNTER_LICENCE,
+  },
+  {
+    id: 'minecraft',
+    name: 'Minecraft',
+    tagline: 'Bloques, picos y todo lo que cabe en un cofre',
+    noun: 'objeto',
+    emblem: DIRT_BLOCK,
   },
 ];
 
