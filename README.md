@@ -1,16 +1,23 @@
-# ¿Quién soy? — One Piece
+# ¿Quién soy?
 
-Juego web de "¿Quién soy?" para dos jugadores, con temática de One Piece.
+Juego web de "¿Quién soy?" para dos jugadores, con personajes de anime.
 
-Cada jugador elige en secreto, de una lista de personajes de One Piece, el que su
-rival deberá adivinar. Por turnos, se hacen preguntas que se responden con **Sí**,
-**No** o **A veces**, hasta que alguien se atreve a arriesgar un personaje.
+Se elige con qué anime jugáis —**One Piece** o **Hunter × Hunter**— y cada jugador
+elige en secreto, de la lista de ese anime, el personaje que su rival deberá adivinar.
+Por turnos, se hacen preguntas que se responden con **Sí**, **No** o **A veces**,
+hasta que alguien se atreve a arriesgar un personaje.
 
-Uno crea una sala, le dicta el código de cinco letras a la otra persona, y a jugar.
-Podéis estar en ordenadores distintos. De la sala se sale cuando quieras: se cierra
-para los dos y se vuelve a la pantalla de entrada.
+Uno crea la sala, le dicta el código de cinco letras a la otra persona, y a jugar.
+Podéis estar en ordenadores distintos. El anime lo elige quien crea la sala y quien
+entra con el código juega al mismo. De la sala se sale cuando quieras: se cierra para
+los dos y se vuelve a la pantalla de entrada.
 
 ## Estado
+
+✅ **v4 terminada.** El juego deja de ser solo One Piece. Se elige el anime antes de
+crear la sala, entra **Hunter × Hunter** con 120 personajes escritos a mano, y cada
+uno tiene su emblema y sus colores. Añadir un tercero es añadir datos: su lista de
+personajes, su entrada en el registro y su bloque de colores.
 
 ✅ **v3 terminada.** El personaje se elige de un catálogo cerrado de 778 personajes en
 vez de escribirse a mano: se busca, se pulsa, y acertar se decide comparando
@@ -28,8 +35,9 @@ navegador, sin servidor.
 
 Este repositorio empieza por la especificación, antes que por el código:
 
-- [`docs/ESPEC-V3.md`](docs/ESPEC-V3.md) — lo último construido.
-- [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — lo anterior, cuyos criterios siguen valiendo.
+- [`docs/ESPEC-V4.md`](docs/ESPEC-V4.md) — lo último construido.
+- [`docs/ESPEC-V3.md`](docs/ESPEC-V3.md) y [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — lo
+  anterior, cuyos criterios siguen valiendo.
 - [`docs/ESPEC.md`](docs/ESPEC.md) — la v1, como registro.
 - [`CLAUDE.md`](CLAUDE.md) — reglas de trabajo dentro del repositorio.
 
@@ -69,17 +77,32 @@ contestan.
 
 | Capa | Qué hace |
 |---|---|
-| `src/game/` | Reglas de la partida, el catálogo de personajes y la vista de cada jugador |
+| `src/game/` | Reglas, el registro de animes, los catálogos y la vista de cada jugador |
 | `src/server/` | Salas, validación de lo que llega, y el servidor HTTP + WebSocket |
 | `src/client/` | Conexión, sesión de la pestaña, selector de personaje e interfaz |
-| `data/` | El catálogo de personajes y las correcciones a sus nombres |
-| `scripts/` | El script que genera el catálogo |
+| `data/` | Un catálogo de personajes por anime, y las correcciones a sus nombres |
+| `scripts/` | El script que genera el catálogo de One Piece |
 
-El catálogo es un fichero del repositorio, no una llamada a una API: el juego no sale
-a internet mientras se juega, así que si la API se cae, la partida sigue. Volver a
-generarlo es `npm run catalog`, y las correcciones a los nombres viven aparte en
-[`data/one-piece-corrections.json`](data/one-piece-corrections.json) para que
-regenerarlo no las pierda.
+Los catálogos son ficheros del repositorio, no llamadas a una API: el juego no sale a
+internet mientras se juega, así que si la API se cae, la partida sigue. El de One
+Piece se regenera con `npm run catalog`, y las correcciones a los nombres viven aparte
+en [`data/one-piece-corrections.json`](data/one-piece-corrections.json) para que
+regenerarlo no las pierda. El de Hunter × Hunter está escrito a mano y no tiene script
+detrás; una prueba comprueba que cumple las mismas reglas que el otro.
+
+### Añadir un anime
+
+Tres cosas, y ninguna es código de reglas:
+
+1. **Su lista de personajes** en `data/<anime>.json`, con un `{"id","name"}` por línea.
+   El identificador sale del nombre; si te equivocas, `npm test` te lo dice.
+2. **Su entrada en el registro**, [`src/game/animes.js`](src/game/animes.js): nombre,
+   una línea que lo presente y su emblema en SVG, dibujado con las clases del tema
+   (`bone`, `ink`, `accent`, `hot`) y sin colores propios.
+3. **Su bloque de colores** en [`styles/main.css`](styles/main.css), colgando de
+   `[data-anime='<anime>']`.
+
+Ni las salas, ni las reglas, ni los mensajes que van por el cable cambian.
 
 El personaje que te toca adivinar **no sale nunca del servidor** hasta que la partida
 termina. A diferencia de la v1, abrir las herramientas de desarrollo no sirve de nada.
@@ -90,8 +113,10 @@ jugadores se sale.
 
 ## Aviso
 
-Proyecto de fan, sin ánimo de lucro y sin relación con los propietarios de One Piece.
-No incluye arte ni material con derechos: la estética es original.
+Proyecto de fan, sin ánimo de lucro y sin relación con los propietarios de One Piece
+ni de Hunter × Hunter. No incluye arte ni material con derechos: la estética es
+original, emblemas incluidos.
 
-Los nombres de los personajes vienen de la API pública de
-[api-onepiece.com](https://api-onepiece.com), con algunas correcciones propias.
+Los nombres de los personajes de One Piece vienen de la API pública de
+[api-onepiece.com](https://api-onepiece.com), con algunas correcciones propias. Los de
+Hunter × Hunter están escritos a mano.
