@@ -1,7 +1,7 @@
 {
   "name": "quien-soy",
   "version": "1.0.0",
-  "description": "Juego web de ¿Quién soy? para dos jugadores, con personajes de anime",
+  "description": "Juego web de ¿Quién soy? para dos jugadores, con personajes de anime y objetos de Minecraft",
   "type": "module",
   "private": true,
   "scripts": {

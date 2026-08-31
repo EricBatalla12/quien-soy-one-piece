@@ -40,8 +40,10 @@ crea la sala: hoy One Piece, Hunter × Hunter y Minecraft.
 - `npm test` — ejecuta los tests (`node --test`).
 - `npm start` — sirve el juego y coordina las partidas en http://localhost:8000.
   `npm run dev` hace lo mismo.
-- `npm run catalog` — vuelve a generar `data/one-piece.json` desde la API. Los mundos
-  que no tienen script se escriben a mano; el README cuenta cómo añadir uno.
+- `npm run catalog` — vuelve a generar `data/one-piece.json` desde la API.
+- `npm run minecraft` — vuelve a generar `data/minecraft.json` desde el registro del
+  juego. Los mundos que no tienen script se escriben a mano; el README cuenta cómo
+  añadir uno.
 
 La única dependencia es `ws`, ya aprobada. Añade solo las imprescindibles y pregunta
 antes de cada una.

@@ -1,11 +1,12 @@
 # ¿Quién soy?
 
-Juego web de "¿Quién soy?" para dos jugadores, con personajes de anime.
+Juego web de "¿Quién soy?" para dos jugadores.
 
-Se elige con qué mundo jugáis —**One Piece** o **Hunter × Hunter**— y cada jugador
-elige en secreto, de la lista de ese mundo, el personaje que su rival deberá adivinar.
-Por turnos, se hacen preguntas que se responden con **Sí**, **No** o **A veces**,
-hasta que alguien se atreve a arriesgar un personaje.
+Se elige con qué mundo jugáis —**One Piece**, **Hunter × Hunter** o **Minecraft**— y
+cada jugador elige en secreto, de la lista de ese mundo, lo que su rival deberá
+adivinar: un personaje, o un objeto si jugáis a Minecraft. Por turnos, se hacen
+preguntas que se responden con **Sí**, **No** o **A veces**, hasta que alguien se
+atreve a arriesgar.
 
 Uno crea la sala, le dicta el código de cinco letras a la otra persona, y a jugar.
 Podéis estar en ordenadores distintos. El mundo lo elige quien crea la sala y quien
@@ -13,6 +14,11 @@ entra con el código juega al mismo. De la sala se sale cuando quieras: se cierr
 los dos y se vuelve a la pantalla de entrada.
 
 ## Estado
+
+✅ **v5 terminada.** Entra **Minecraft** con sus **1504 objetos**, y con él se cae una
+palabra: lo que se elige ya no es un anime sino un **mundo**, porque Minecraft no lo
+es. Cada mundo dice además cómo se llama lo que tiene dentro, así que la interfaz no
+le llama personaje a un yunque.
 
 ✅ **v4 terminada.** El juego deja de ser solo One Piece. Se elige el mundo antes de
 crear la sala, entra **Hunter × Hunter** con 120 personajes escritos a mano, y cada
@@ -35,9 +41,10 @@ navegador, sin servidor.
 
 Este repositorio empieza por la especificación, antes que por el código:
 
-- [`docs/ESPEC-V4.md`](docs/ESPEC-V4.md) — lo último construido.
-- [`docs/ESPEC-V3.md`](docs/ESPEC-V3.md) y [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — lo
-  anterior, cuyos criterios siguen valiendo.
+- [`docs/ESPEC-V5.md`](docs/ESPEC-V5.md) — lo último construido.
+- [`docs/ESPEC-V4.md`](docs/ESPEC-V4.md), [`docs/ESPEC-V3.md`](docs/ESPEC-V3.md) y
+  [`docs/ESPEC-V2.md`](docs/ESPEC-V2.md) — lo anterior, cuyos criterios siguen
+  valiendo.
 - [`docs/ESPEC.md`](docs/ESPEC.md) — la v1, como registro.
 - [`CLAUDE.md`](CLAUDE.md) — reglas de trabajo dentro del repositorio.
 
@@ -49,7 +56,8 @@ Una sola dependencia, `ws`, para los WebSocket del servidor.
 npm install
 npm start     # sirve el juego y coordina las partidas en http://localhost:8000
 npm test      # todo, sin navegador y sin red de verdad
-npm run catalog  # vuelve a generar data/one-piece.json desde la API (rara vez)
+npm run catalog    # vuelve a generar data/one-piece.json desde la API (rara vez)
+npm run minecraft  # vuelve a generar data/minecraft.json desde el registro del juego
 ```
 
 Para probarlo solo, abre dos pestañas: `sessionStorage` es propio de cada una, así que
@@ -80,25 +88,33 @@ contestan.
 | `src/game/` | Reglas, el registro de mundos, los catálogos y la vista de cada jugador |
 | `src/server/` | Salas, validación de lo que llega, y el servidor HTTP + WebSocket |
 | `src/client/` | Conexión, sesión de la pestaña, selector de personaje e interfaz |
-| `data/` | Un catálogo de personajes por mundo, y las correcciones a sus nombres |
-| `scripts/` | El script que genera el catálogo de One Piece |
+| `data/` | Un catálogo por mundo, y las correcciones a los nombres de One Piece |
+| `scripts/` | Los scripts que generan catálogos |
 
 Los catálogos son ficheros del repositorio, no llamadas a una API: el juego no sale a
-internet mientras se juega, así que si la API se cae, la partida sigue. El de One
-Piece se regenera con `npm run catalog`, y las correcciones a los nombres viven aparte
-en [`data/one-piece-corrections.json`](data/one-piece-corrections.json) para que
-regenerarlo no las pierda. El de Hunter × Hunter está escrito a mano y no tiene script
-detrás; una prueba comprueba que cumple las mismas reglas que el otro.
+internet mientras se juega, así que si una fuente se cae, la partida sigue. Cada mundo
+tiene la suya:
+
+| Mundo | De dónde salen los nombres |
+|---|---|
+| One Piece | La API de [api-onepiece.com](https://api-onepiece.com), con [correcciones a mano](data/one-piece-corrections.json) para que regenerarla no las pierda |
+| Hunter × Hunter | Escritos a mano, sin script detrás |
+| Minecraft | Del registro del propio juego y del fichero de idioma español de Mojang |
+
+Una prueba comprueba que **todos** cumplen las mismas reglas —identificador derivado
+del nombre, orden alfabético, sin repetidos y un objeto por línea—, los genere un
+script o los haya escrito una persona.
 
 ### Añadir un mundo
 
 Tres cosas, y ninguna es código de reglas:
 
-1. **Su lista de personajes** en `data/<mundo>.json`, con un `{"id","name"}` por línea.
-   El identificador sale del nombre; si te equivocas, `npm test` te lo dice.
+1. **Su lista** en `data/<mundo>.json`, con un `{"id","name"}` por línea. El
+   identificador sale del nombre; si te equivocas, `npm test` te lo dice.
 2. **Su entrada en el registro**, [`src/game/worlds.js`](src/game/worlds.js): nombre,
-   una línea que lo presente y su emblema en SVG, dibujado con las clases del tema
-   (`bone`, `ink`, `accent`, `hot`) y sin colores propios.
+   una línea que lo presente, **cómo se llama lo que tiene dentro** (`personaje`,
+   `objeto`…) y su emblema en SVG, dibujado con las clases del tema (`bone`, `ink`,
+   `accent`, `hot`) y sin colores propios.
 3. **Su bloque de colores** en [`styles/main.css`](styles/main.css), colgando de
    `[data-world='<mundo>']`.
 
@@ -113,10 +129,11 @@ jugadores se sale.
 
 ## Aviso
 
-Proyecto de fan, sin ánimo de lucro y sin relación con los propietarios de One Piece
-ni de Hunter × Hunter. No incluye arte ni material con derechos: la estética es
-original, emblemas incluidos.
+Proyecto de fan, sin ánimo de lucro y sin relación con los propietarios de One Piece,
+de Hunter × Hunter ni de Minecraft. No incluye arte ni material con derechos: la
+estética es original, emblemas incluidos.
 
-Los nombres de los personajes de One Piece vienen de la API pública de
-[api-onepiece.com](https://api-onepiece.com), con algunas correcciones propias. Los de
-Hunter × Hunter están escritos a mano.
+De los nombres, solo son nombres: los de One Piece vienen de la API pública de
+[api-onepiece.com](https://api-onepiece.com) con algunas correcciones propias, los de
+Hunter × Hunter están escritos a mano, y los de Minecraft salen del registro del juego
+y del fichero de idioma español de Mojang.
