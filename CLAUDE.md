@@ -5,9 +5,10 @@ servidor Node por medio.
 
 **La especificación manda.** Léela antes de proponer o escribir nada:
 
-- `docs/ESPEC-V3.md` es lo que se está construyendo ahora: el catálogo de personajes.
-- `docs/ESPEC-V2.md` describe lo ya construido y en marcha; sus criterios de
-  aceptación siguen teniendo que cumplirse.
+- `docs/ESPEC-V4.md` es lo que se está construyendo ahora: varios animes, elegidos
+  al crear la sala.
+- `docs/ESPEC-V3.md` y `docs/ESPEC-V2.md` describen lo ya construido y en marcha; sus
+  criterios de aceptación siguen teniendo que cumplirse.
 - `docs/ESPEC.md` es la v1, sustituida: se conserva como registro, no como guía.
 
 ## Reglas de trabajo
