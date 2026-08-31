@@ -1,9 +1,14 @@
 # Especificación — ¿Quién soy? One Piece (v3)
 
-**Versión:** 3.0 (v3)
-**Fecha:** 2026-08-29
+**Versión:** 3.1 (v3)
+**Fecha:** 2026-08-30
 **Autor:** Eric Batalla
 **Sustituye a:** `docs/ESPEC-V2.md`, que se conserva como registro de lo construido.
+
+**Novedad de la 3.1:** salir de una sala, que no estaba en la 3.0. Se construyó
+después de darla por terminada y se recoge aquí —secciones 6.6 y 8— en vez de
+esperar a una v4: es de esta versión, y una espec que no cuenta lo que hay hace más
+daño que una espec corta.
 
 ---
 
@@ -34,6 +39,8 @@ expiración, revancha con marcador, historial que se desplaza y tablero de pista
    por escribir mal un nombre; se falla por equivocarse de personaje, que es de lo
    que va el juego.
 3. **Final.** Al terminar se revelan los dos personajes, como hasta ahora.
+4. **Salir** (3.1). Desde cualquier pantalla de la sala se puede volver a la de
+   entrada. La sala se cierra para los dos: sin rival no hay partida que seguir.
 
 ## 3. Alcance v3 — qué SÍ entra
 
@@ -45,6 +52,8 @@ expiración, revancha con marcador, historial que se desplaza y tablero de pista
 - **El acierto se decide comparando identificadores**, no textos.
 - **Un script que genera el catálogo** desde una API pública, con las correcciones a
   mano guardadas aparte para que volver a ejecutarlo no las pierda.
+- **Salir de la sala** (3.1) desde cualquiera de sus pantallas, cerrándola para los
+  dos jugadores. Ver sección 6.6.
 
 ## 4. Alcance v3 — qué NO entra
 
@@ -149,6 +158,46 @@ derivación del `id`, la limpieza del catálogo, la búsqueda, y las reglas del 
 identificadores. El script que llama a la API no se testea contra la API: se testea la
 función que transforma una respuesta en catálogo, dándole una respuesta de mentira.
 
+### 6.6 Salir de la sala (3.1)
+
+Hasta ahora de una sala solo se salía de dos maneras, las dos malas: cerrar la
+pestaña —y dejar tu plaza ocupada hasta que la sala caducara— o esperar quince
+minutos. Se añade una tercera, deliberada: un botón en todas las pantallas de la
+sala, que devuelve a la pantalla de entrada.
+
+**Salir cierra la sala para los dos.** Es la decisión de fondo y no es la única
+posible, pero sí la única que no deja a nadie a medias: con dos plazas y una partida
+entre dos personas concretas, dejar la sala viva solo dejaría al que se queda
+esperando a alguien que no va a volver, con un marcador y un historial que ya no son
+de nadie. Al rival se le dice quién se ha ido, no que la sala ha caducado, que es
+mentira y además le haría sospechar del servidor.
+
+**Con el rival sentado se pregunta antes; esperando solo, no.** Salir de una sala
+recién creada no interrumpe a nadie y un clic basta. Con alguien al otro lado, un
+roce sin querer —en un móvil, con el pulgar— se llevaría por delante también su
+partida, así que hay que confirmar. La confirmación se pinta como una pantalla más y
+**no** con un diálogo del navegador: así se lee y se testea como el resto de la
+interfaz, y en el móvil no salta una ventana del sistema encima del juego.
+
+Al protocolo de la v2 (sección 6.1 de `docs/ESPEC-V2.md`) le salen dos mensajes:
+
+| Mensaje | Dirección | Qué provoca |
+|---|---|---|
+| `leave` | del cliente | Cierra la sala en la que estás sentado |
+| `left` | del servidor | Te has salido tú: a la pantalla de entrada, sin nada que leer |
+
+Al que se queda se le avisa con el `expired` que ya existía, cambiando el motivo:
+"Nami ha salido de la sala". Para el navegador es lo mismo que una sala caducada
+—esa sala ya no existe— y así no hace falta un mensaje nuevo para cada forma de
+perderla.
+
+**A ninguno de los dos se le cierra el socket**, y en esto se aparta de lo que hace
+una sala al caducar. Cerrarlo es la forma fácil de vaciar la plaza, porque la plaza
+vive dentro del socket, pero le provoca al jugador una reconexión y, mientras dura,
+el aviso de que su sitio en la sala le espera, que en este caso ya es falso. Se le
+vacía la plaza y se le deja la conexión: sale, lee lo que ha pasado y puede crear
+otra sala en el momento.
+
 ## 7. Limitaciones conocidas y aceptadas
 
 - **786 personajes son muchos para adivinar.** El catálogo entero incluye personajes
@@ -160,6 +209,9 @@ función que transforma una respuesta en catálogo, dándole una respuesta de me
   alguien ejecuta el script y sube el resultado.
 - **Los nombres son los de la API**, en la forma en que ella los escribe. Las
   correcciones son las que haya en el fichero de correcciones, no todas las posibles.
+- **Salir no tiene vuelta atrás** (3.1). La sala se cierra, y con ella el marcador y
+  el historial; el código deja de valer. No hay forma de recuperarla, igual que no la
+  hay cuando caduca. Por eso se pregunta antes si hay alguien más dentro.
 - **El buscador busca nombres, no apodos.** Escribir "zoro" encuentra a "Roronoa
   Zoro", porque busca dentro del nombre entero; pero "el cocinero" no encuentra a
   Sanji, ni "sombrero de paja" a la tripulación. Para eso harían falta datos por
@@ -187,6 +239,18 @@ La v3 está terminada cuando todo esto se cumple:
 12. Todo lo de la v2 sigue cumpliéndose: sus veinte criterios de aceptación.
 13. El selector se puede usar con el teclado y no se rompe en pantalla de móvil.
 
+Y de la 3.1:
+
+14. Se puede salir de la sala desde cualquiera de sus pantallas: esperando rival,
+    eligiendo personaje, jugando y al terminar. En la de entrada no hay botón, porque
+    no hay de dónde salir.
+15. Salir cierra la sala para los dos: al que se queda se le dice quién se ha ido, y
+    el código deja de existir para cualquiera que lo intente después.
+16. Con el rival sentado se pregunta antes de salir; esperando solo en una sala
+    recién creada, se sale de un clic.
+17. Ni el que sale ni el que se queda tienen que recargar la página: los dos pueden
+    crear otra sala o entrar en una distinta desde la pantalla de entrada.
+
 ## 9. Plan de trabajo
 
 Por piezas pequeñas, un commit por pieza, cada una con sus tests:
@@ -198,3 +262,7 @@ Por piezas pequeñas, un commit por pieza, cada una con sus tests:
 4. La vista resuelve identificadores a nombres.
 5. El buscador: la función que filtra, y el selector en la interfaz.
 6. Preparación y arriesgar usan el selector.
+
+Y ya con la v3 terminada, la pieza de la 3.1:
+
+7. Salir de la sala: la acción en el servidor, el botón y su confirmación.
