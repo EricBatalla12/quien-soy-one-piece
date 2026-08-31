@@ -8,7 +8,16 @@
  * navegador: el DOM, el almacén y el socket.
  */
 
-import { confirmsLeaving, initialModel, reconnected, receive, sending, withStatus } from './app.js';
+import {
+  confirmsLeaving,
+  dressedAnime,
+  initialModel,
+  reconnected,
+  receive,
+  sending,
+  withStatus,
+} from './app.js';
+import { DEFAULT_ANIME, catalogPath } from '../game/animes.js';
 import { createCatalog } from '../game/catalog.js';
 import { isPinned, moveClue, noClues, pinClue, unpinClue } from './clues.js';
 import { chosen, highlighted, moveHighlight, noPicker, searching } from './picker.js';
@@ -27,17 +36,24 @@ import { render } from './ui/render.js';
 
 const app = document.getElementById('app');
 
-/** Por HTTP y una sola vez, no por el WebSocket (sección 6.3 de la espec v3). */
-const CATALOG_URL = 'data/one-piece.json';
-
 let model = initialModel();
 
 /**
- * El catálogo de personajes: `null` mientras se descarga, y un catálogo vacío si no
- * se ha podido. Vive aquí y no en el modelo porque no viene del servidor de partidas
- * ni cambia durante el juego: se pide al arrancar y ya está.
+ * Los catálogos ya descargados: anime → catálogo, y un catálogo vacío si no se ha
+ * podido. Viven aquí y no en el modelo porque no vienen del servidor de partidas ni
+ * cambian durante el juego.
+ *
+ * Se piden por HTTP y no por el WebSocket (sección 6.2 de la espec v4), y **no al
+ * arrancar**: hasta estar dentro de una sala no se sabe cuál hace falta. Volver a
+ * entrar en una sala del mismo anime no lo vuelve a descargar.
  */
-let catalog = null;
+const catalogs = new Map();
+
+/** Los que se están pidiendo ahora mismo, para no pedir el mismo dos veces. */
+const pending = new Set();
+
+/** Con qué anime se va a crear la sala. Dentro de una sala manda el de la sala. */
+let chosenAnime = DEFAULT_ANIME;
 
 /** Qué has escrito y qué has elegido en el selector de personaje. */
 let picker = noPicker();
@@ -75,24 +91,28 @@ const connection = connect({
 });
 
 paint();
-loadCatalog();
 
 /**
- * El catálogo, del servidor web y no del de partidas.
+ * El catálogo de un anime, del servidor web y no del de partidas.
  *
  * Si falla, el juego sigue funcionando en todo lo demás —se puede crear sala, entrar
  * y ver el historial— y el selector dice que no ha podido cargarse. Un catálogo
  * vacío es justo eso: no hay a quién elegir.
  */
-async function loadCatalog() {
+async function loadCatalog(anime) {
+  if (catalogs.has(anime) || pending.has(anime)) return;
+  pending.add(anime);
+
   try {
-    const response = await fetch(CATALOG_URL);
+    const response = await fetch(catalogPath(anime));
     if (!response.ok) throw new Error(`el servidor ha contestado ${response.status}`);
 
-    catalog = createCatalog(await response.json());
+    catalogs.set(anime, createCatalog(await response.json()));
   } catch (cause) {
-    console.error('No se ha podido cargar el catálogo de personajes:', cause);
-    catalog = createCatalog([]);
+    console.error(`No se ha podido cargar el catálogo de ${anime}:`, cause);
+    catalogs.set(anime, createCatalog([]));
+  } finally {
+    pending.delete(anime);
   }
 
   paint();
@@ -122,6 +142,10 @@ function handle(message) {
 
   applyToSession(session);
   loadClues();
+
+  // El catálogo se pide al entrar en la sala, que es cuando se sabe cuál hace falta.
+  if (model.view !== null) loadCatalog(model.view.anime.id);
+
   paint();
 }
 
@@ -171,7 +195,19 @@ function paint() {
   const typed = captureTyping();
   const scrolled = captureScroll();
 
-  app.innerHTML = render({ ...model, clues, catalog, picker, leaving });
+  // El anime viste la página entera —el fondo es del `body`—, así que se marca ahí y
+  // el bloque de color que le toca manda sobre el de por defecto.
+  const anime = dressedAnime(model.view, chosenAnime);
+  document.body.dataset.anime = anime;
+
+  app.innerHTML = render({
+    ...model,
+    clues,
+    catalog: catalogs.get(anime) ?? null,
+    picker,
+    leaving,
+    anime,
+  });
 
   restoreTyping(typed);
   restoreScroll(scrolled);
@@ -249,7 +285,7 @@ app.addEventListener('submit', (event) => {
     // El nombre se escribe una sola vez y vale para crear y para entrar, así que se
     // lee del campo y no del formulario que se acaba de enviar.
     case 'create-form':
-      send({ type: 'create', name: valueOf('#name-input') });
+      send({ type: 'create', name: valueOf('#name-input'), anime: chosenAnime });
       break;
     case 'join-form':
       send({ type: 'join', code: valueOf('#code-input'), name: valueOf('#name-input') });
@@ -299,6 +335,7 @@ app.addEventListener('input', (event) => {
 app.addEventListener('keydown', (event) => {
   if (!isSearchField(event.target)) return;
 
+  const catalog = catalogs.get(dressedAnime(model.view, chosenAnime)) ?? null;
   const matches = catalog === null ? [] : catalog.search(picker.query).matches;
 
   switch (event.key) {
@@ -345,7 +382,15 @@ app.addEventListener('click', (event) => {
   const button = event.target.closest('button');
   if (button === null) return;
 
-  const { answer, pin, move, unpick } = button.dataset;
+  const { answer, anime, pin, move, unpick } = button.dataset;
+
+  // Elegir anime en la pantalla de entrada: cambia lo que se va a crear y cómo se
+  // ve la página, y no manda nada al servidor hasta que se crea la sala.
+  if (anime !== undefined) {
+    chosenAnime = anime;
+    paint();
+    return;
+  }
 
   if (answer !== undefined) {
     send({ type: 'answer', answer });

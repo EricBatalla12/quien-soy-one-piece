@@ -11,6 +11,7 @@
  * los dos digan.
  */
 
+import { ANIMES, DEFAULT_ANIME } from '../../game/animes.js';
 import { highlightIndex, isChosen } from '../picker.js';
 
 /**
@@ -64,6 +65,8 @@ const EMPTY_PICKER = { query: '', chosenId: null, highlight: 0 };
  * `catalog` es la lista de personajes, o null mientras se está descargando.
  * `picker` es qué has escrito y qué has elegido en el selector.
  * `leaving` es si has pulsado salir y falta confirmarlo.
+ * `anime` es el que llevas elegido en la pantalla de entrada; dentro de una sala
+ * manda el suyo, que llega en la vista y no se puede cambiar.
  */
 export function render({
   view,
@@ -73,6 +76,7 @@ export function render({
   catalog = null,
   picker = EMPTY_PICKER,
   leaving = false,
+  anime = DEFAULT_ANIME,
 }) {
   return `
     <header>
@@ -82,21 +86,25 @@ export function render({
     </header>
     ${connectionNotice(status)}
     ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
-    ${view === null ? entryScreen() : roomScreen(view, { clues, catalog, picker, leaving })}
+    ${view === null ? entryScreen(anime) : roomScreen(view, { clues, catalog, picker, leaving })}
   `;
 }
 
+/** La línea de debajo del título: fuera de una sala, con quién juegas; dentro, a qué. */
 function headerLine(view) {
   if (view === null) return 'Dos jugadores, dos secretos';
 
-  // El código y el marcador van en pastillas: son los dos datos que se buscan de
-  // un vistazo, y sueltos en la línea se perdían entre los nombres.
+  // El anime, el código y el marcador van en pastillas: son los datos que se buscan
+  // de un vistazo, y sueltos en la línea se perdían entre los nombres. El anime va
+  // el primero porque es lo que quien acaba de entrar con el código no ha elegido
+  // (criterio 3 de la v4).
+  const anime = `<span class="pill anime">${escapeHtml(view.anime.name)}</span>`;
   const room = `<span class="pill room">${escapeHtml(view.code)}</span>`;
   const you = escapeHtml(view.you.name);
-  if (view.rival === null) return `${you} ${room}`;
+  if (view.rival === null) return `${you} ${anime} ${room}`;
 
   const score = `<span class="pill score">${view.score[view.you.id]}–${view.score[view.rival.id]}</span>`;
-  return `${you} contra ${escapeHtml(view.rival.name)} ${room} ${score}`;
+  return `${you} contra ${escapeHtml(view.rival.name)} ${anime} ${room} ${score}`;
 }
 
 function connectionNotice(status) {
@@ -110,10 +118,11 @@ function connectionNotice(status) {
   return `<p class="notice">${message}</p>`;
 }
 
-function entryScreen() {
+function entryScreen(chosen) {
   return `
+    ${animeChooser(chosen)}
     <section>
-      <h2>Al abordaje</h2>
+      <h2>La sala</h2>
       <p>
         Uno crea la sala y le dicta el código a la otra persona. Podéis estar en
         ordenadores distintos.
@@ -129,6 +138,38 @@ function entryScreen() {
           placeholder="Código" required />
         <button type="submit">Entrar</button>
       </form>
+    </section>
+  `;
+}
+
+/**
+ * Con qué anime se juega, que se elige antes de crear la sala.
+ *
+ * Solo lo elige quien crea: quien entra con un código hereda el de la sala
+ * (sección 4 de la espec v4), y se dice aquí para que no se busque dónde cambiarlo.
+ *
+ * Son botones y no un desplegable ni unos `radio`: son pocos, y así se ven los dos
+ * de un vistazo con su línea de presentación. `aria-pressed` es lo que le cuenta a
+ * un lector de pantalla cuál está elegido.
+ */
+function animeChooser(chosen) {
+  const options = ANIMES.map(
+    (anime) => `<li>
+      <button type="button" class="anime${anime.id === chosen ? ' on' : ''}"
+        data-anime="${escapeHtml(anime.id)}" aria-pressed="${anime.id === chosen}">
+        <span class="anime-name">${escapeHtml(anime.name)}</span>
+        <span class="anime-tagline">${escapeHtml(anime.tagline)}</span>
+      </button>
+    </li>`,
+  ).join('');
+
+  return `
+    <section class="animes">
+      <h2>¿A qué jugáis?</h2>
+      <ul class="anime-list">${options}</ul>
+      <p class="animes-note">
+        Lo elige quien crea la sala; quien entre con el código juega al mismo.
+      </p>
     </section>
   `;
 }

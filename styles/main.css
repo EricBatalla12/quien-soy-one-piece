@@ -321,6 +321,73 @@ button:focus-visible {
   color: var(--ink-soft);
 }
 
+/* --- Elegir anime ------------------------------------------------------- */
+
+.anime-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.7rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * Cada anime es un botón entero y no un `radio` con su etiqueta: son pocos, y así
+ * el nombre y la línea que lo presenta están dentro de lo que se pulsa, que en un
+ * móvil es la diferencia entre acertar y no.
+ */
+.anime-list button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(109, 86, 55, 0.35);
+  box-shadow: none;
+}
+
+.anime-list button:hover {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.anime-list button:active {
+  transform: none;
+}
+
+/* El elegido, con el dorado del tema: se ve cuál es sin leer (criterio 1). */
+.anime-list button.on {
+  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  border-color: #a97c1e;
+  box-shadow: 0 3px 0 #8a6417;
+}
+
+.anime-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.anime-tagline {
+  font-size: 0.85rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.anime-list button.on .anime-tagline {
+  color: #5b4523;
+}
+
+.animes-note {
+  margin: 0.7rem 0 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
 /* --- Textos de estado --------------------------------------------------- */
 
 blockquote {

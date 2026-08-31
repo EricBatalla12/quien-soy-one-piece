@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   confirmsLeaving,
+  dressedAnime,
   initialModel,
   reconnected,
   receive,
@@ -167,4 +168,20 @@ test('con el rival sentado se pregunta antes de salir; esperando solo, no', () =
   assert.ok(confirmsLeaving({ ...VIEW, rival: { id: 2, name: 'Nami' } }));
   assert.ok(!confirmsLeaving({ ...VIEW, rival: null }));
   assert.ok(!confirmsLeaving(null), 'sin sala no hay de qué salir');
+});
+
+// ---------------------------------------------------------------------------
+// De qué anime se viste la pantalla (v4)
+// ---------------------------------------------------------------------------
+
+test('fuera de una sala manda el anime que llevas señalado', () => {
+  assert.equal(dressedAnime(null, 'hunter-x-hunter'), 'hunter-x-hunter');
+});
+
+// Criterio 3: quien entra con el código no elige, y lo que llevara señalado antes no
+// puede colarse por encima del anime de la sala.
+test('dentro de una sala manda el suyo, se hubiera señalado el que fuera', () => {
+  const view = { anime: { id: 'hunter-x-hunter', name: 'Hunter × Hunter' } };
+
+  assert.equal(dressedAnime(view, 'one-piece'), 'hunter-x-hunter');
 });
