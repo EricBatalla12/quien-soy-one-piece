@@ -1,14 +1,15 @@
 # ¿Quién soy?
 
 Juego web de "¿Quién soy?" para dos jugadores desde ordenadores distintos, con un
-servidor Node por medio. Se juega con los personajes de un anime, que elige quien crea
-la sala: hoy One Piece y Hunter × Hunter.
+servidor Node por medio. Se juega con lo que haya dentro de un mundo, que elige quien
+crea la sala: hoy One Piece, Hunter × Hunter y Minecraft.
 
 **La especificación manda.** Léela antes de proponer o escribir nada:
 
-- `docs/ESPEC-V4.md` es lo último construido: varios animes, elegidos al crear la sala.
-- `docs/ESPEC-V3.md` y `docs/ESPEC-V2.md` describen lo anterior, también en marcha; sus
-  criterios de aceptación siguen teniendo que cumplirse.
+- `docs/ESPEC-V5.md` es lo que se está construyendo ahora: Minecraft, y el anime que
+  pasa a ser un mundo.
+- `docs/ESPEC-V4.md`, `docs/ESPEC-V3.md` y `docs/ESPEC-V2.md` describen lo anterior,
+  también en marcha; sus criterios de aceptación siguen teniendo que cumplirse.
 - `docs/ESPEC.md` es la v1, sustituida: se conserva como registro, no como guía.
 
 ## Reglas de trabajo
@@ -39,8 +40,8 @@ la sala: hoy One Piece y Hunter × Hunter.
 - `npm test` — ejecuta los tests (`node --test`).
 - `npm start` — sirve el juego y coordina las partidas en http://localhost:8000.
   `npm run dev` hace lo mismo.
-- `npm run catalog` — vuelve a generar `data/one-piece.json` desde la API. El resto de
-  animes se escriben a mano; el README cuenta cómo añadir uno.
+- `npm run catalog` — vuelve a generar `data/one-piece.json` desde la API. Los mundos
+  que no tienen script se escriben a mano; el README cuenta cómo añadir uno.
 
 La única dependencia es `ws`, ya aprobada. Añade solo las imprescindibles y pregunta
 antes de cada una.
