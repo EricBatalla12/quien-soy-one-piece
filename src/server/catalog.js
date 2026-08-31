@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { createCatalog } from '../game/catalog.js';
 
 /** Dentro del repositorio, y también la URL por la que lo pide el navegador. */
-export const CATALOG_PATH = 'data/characters.json';
+export const CATALOG_PATH = 'data/one-piece.json';
 
 export function loadCatalog(root) {
   let entries;

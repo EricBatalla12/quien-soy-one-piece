@@ -28,7 +28,7 @@ import { render } from './ui/render.js';
 const app = document.getElementById('app');
 
 /** Por HTTP y una sola vez, no por el WebSocket (sección 6.3 de la espec v3). */
-const CATALOG_URL = 'data/characters.json';
+const CATALOG_URL = 'data/one-piece.json';
 
 let model = initialModel();
 

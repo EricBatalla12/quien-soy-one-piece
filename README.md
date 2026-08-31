@@ -41,7 +41,7 @@ Una sola dependencia, `ws`, para los WebSocket del servidor.
 npm install
 npm start     # sirve el juego y coordina las partidas en http://localhost:8000
 npm test      # todo, sin navegador y sin red de verdad
-npm run catalog  # vuelve a generar data/characters.json desde la API (rara vez)
+npm run catalog  # vuelve a generar data/one-piece.json desde la API (rara vez)
 ```
 
 Para probarlo solo, abre dos pestañas: `sessionStorage` es propio de cada una, así que
@@ -78,7 +78,8 @@ contestan.
 El catálogo es un fichero del repositorio, no una llamada a una API: el juego no sale
 a internet mientras se juega, así que si la API se cae, la partida sigue. Volver a
 generarlo es `npm run catalog`, y las correcciones a los nombres viven aparte en
-[`data/corrections.json`](data/corrections.json) para que regenerarlo no las pierda.
+[`data/one-piece-corrections.json`](data/one-piece-corrections.json) para que
+regenerarlo no las pierda.
 
 El personaje que te toca adivinar **no sale nunca del servidor** hasta que la partida
 termina. A diferencia de la v1, abrir las herramientas de desarrollo no sirve de nada.

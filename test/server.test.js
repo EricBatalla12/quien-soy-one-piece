@@ -199,7 +199,7 @@ test('un personaje que no está en el catálogo se rechaza aunque se mande a man
 
 // Criterio 9 de la v3: el catálogo se sirve como fichero estático.
 test('el navegador puede pedir el catálogo por HTTP', async () => {
-  const response = await fetch(`http://localhost:${port}/data/characters.json`);
+  const response = await fetch(`http://localhost:${port}/data/one-piece.json`);
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type'), /application\/json/);

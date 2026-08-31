@@ -19,7 +19,7 @@
  */
 const PUBLIC_FILES = [
   'index.html',
-  'data/characters.json',
+  'data/one-piece.json',
   'src/game/catalog.js',
   'src/game/normalize.js',
 ];

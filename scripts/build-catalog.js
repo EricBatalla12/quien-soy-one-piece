@@ -1,5 +1,5 @@
 /**
- * Genera `data/characters.json` a partir de la API pública de One Piece.
+ * Genera `data/one-piece.json` a partir de la API pública de One Piece.
  *
  * Se ejecuta a mano —`npm run catalog`— y el resultado se sube al repositorio: el
  * juego nunca llama a la API (sección 6.1 de la espec v3). Si la API se cae, cambia
@@ -9,10 +9,10 @@
  * catálogo— es pura y está testeada con una respuesta de mentira, sin salir a
  * internet.
  *
- * Las correcciones a los nombres viven aparte, en `data/corrections.json`: un mapa
- * de "nombre tal y como lo devuelve la API" → "nombre bueno", escrito a mano. Se
- * aplican antes de derivar el identificador, así que volver a generar el catálogo no
- * las pierde; y si la API deja de devolver un nombre corregido, el script avisa de
+ * Las correcciones a los nombres viven aparte, en `data/one-piece-corrections.json`:
+ * un mapa de "nombre tal y como lo devuelve la API" → "nombre bueno", escrito a mano.
+ * Se aplican antes de derivar el identificador, así que volver a generar el catálogo
+ * no las pierde; y si la API deja de devolver un nombre corregido, el script avisa de
  * que esa corrección ya sobra.
  */
 
@@ -25,8 +25,8 @@ import { buildCatalog, unusedCorrections } from '../src/game/catalog.js';
 export const API_URL = 'https://api.api-onepiece.com/v2/characters/en';
 
 const root = new URL('../', import.meta.url);
-const CATALOG_FILE = new URL('data/characters.json', root);
-const CORRECTIONS_FILE = new URL('data/corrections.json', root);
+const CATALOG_FILE = new URL('data/one-piece.json', root);
+const CORRECTIONS_FILE = new URL('data/one-piece-corrections.json', root);
 
 /**
  * Los nombres que trae la respuesta.
