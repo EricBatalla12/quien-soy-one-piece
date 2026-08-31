@@ -1,13 +1,17 @@
 # Despliegue en Render. Con este fichero en el repositorio, Render configura solo el
 # servicio ("Blueprint") en vez de tener que rellenar los campos a mano.
 #
+# El nombre del servicio es también su subdominio: `quien-soy` se sirve en
+# https://quien-soy.onrender.com. Cambiarlo cambia la dirección, y Render lo trata
+# como un servicio nuevo, así que no se toca a la ligera.
+#
 # Plan gratuito: el servicio se duerme tras 15 minutos sin recibir nada y tarda cerca
 # de un minuto en despertar. Los mensajes de un WebSocket abierto cuentan como
 # actividad, así que una partida en curso lo mantiene despierto; y como las salas
 # caducan también a los 15 minutos, cuando se duerme ya no había nada que perder.
 services:
   - type: web
-    name: quien-soy-one-piece
+    name: quien-soy
     runtime: node
     plan: free
     region: frankfurt # la más cercana a España de las de Render
