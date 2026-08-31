@@ -21,6 +21,7 @@ import { argv } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { buildCatalog, unusedCorrections } from '../src/game/catalog.js';
+import { serializeCatalog } from './catalog-file.js';
 
 export const API_URL = 'https://api.api-onepiece.com/v2/characters/en';
 
@@ -51,16 +52,6 @@ export function catalogFromResponse(payload, corrections) {
   if (catalog.length === 0) throw new Error('La API no ha devuelto ningún personaje aprovechable');
 
   return catalog;
-}
-
-/**
- * El fichero, con un personaje por línea.
- *
- * Es JSON de verdad, pero puesto de forma que el diff de un catálogo regenerado
- * enseñe una línea por personaje añadido o corregido, y no cuatro.
- */
-export function serializeCatalog(catalog) {
-  return `[\n${catalog.map((entry) => `  ${JSON.stringify(entry)}`).join(',\n')}\n]\n`;
 }
 
 async function main() {

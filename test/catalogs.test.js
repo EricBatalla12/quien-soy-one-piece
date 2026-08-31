@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { WORLDS, catalogPath, findWorld } from '../src/game/worlds.js';
 import { buildCatalog, createCatalog } from '../src/game/catalog.js';
-import { serializeCatalog } from '../scripts/build-catalog.js';
+import { serializeCatalog } from '../scripts/catalog-file.js';
 
 /**
  * Los ficheros de personajes del repositorio, todos, y no solo el que había.

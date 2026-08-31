@@ -1,11 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  catalogFromResponse,
-  namesFromResponse,
-  serializeCatalog,
-} from '../scripts/build-catalog.js';
+import { catalogFromResponse, namesFromResponse } from '../scripts/build-catalog.js';
+import { serializeCatalog } from '../scripts/catalog-file.js';
 
 // La espec (sección 6.5) pide testear la función que transforma la respuesta, no la
 // llamada a la API: aquí no hay red, solo respuestas de mentira.
