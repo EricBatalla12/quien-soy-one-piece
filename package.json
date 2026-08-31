@@ -8,7 +8,8 @@
     "test": "node --test",
     "start": "node src/server/start.js",
     "dev": "node src/server/start.js",
-    "catalog": "node scripts/build-catalog.js"
+    "catalog": "node scripts/build-catalog.js",
+    "minecraft": "node scripts/build-minecraft.js"
   },
   "engines": {
     "node": ">=20"
